@@ -1,20 +1,14 @@
 import Phaser from "phaser";
 import bgImg from "../assets/images/bg_courtyard.png";
-import heroImg from "../assets/images/hero_idle.png";
+import heroSittingImg from "../assets/images/hero_sitting.png";
 import trashcanImg from "../assets/images/trashcan.png";
-import grandmotherImg from "../assets/images/grandmother_avatar.png";
 
-/**
- * Preloader — generates colored-rectangle placeholders for every asset
- * so the game never crashes even when real sprites are missing.
- */
 export class Preloader extends Phaser.Scene {
   constructor() {
     super({ key: "Preloader" });
   }
 
   preload(): void {
-    // Show a tiny loading bar
     const { width, height } = this.scale;
     const bar = this.add.graphics();
     const box = this.add.graphics();
@@ -33,24 +27,19 @@ export class Preloader extends Phaser.Scene {
       box.destroy();
     });
 
-    // Load assets via bundled imports so paths resolve in production
     this.load.image("bg_courtyard", bgImg);
-    this.load.image("hero_idle", heroImg);
+    this.load.image("hero_sitting", heroSittingImg);
     this.load.image("trashcan", trashcanImg);
-    this.load.image("grandmother_avatar", grandmotherImg);
   }
 
   create(): void {
-    // Generate placeholder textures for any asset that failed to load
     this.ensureTexture("bg_courtyard", 390, 844, 0x2d4a3e);
-    this.ensureTexture("hero_idle", 64, 96, 0xe8a87c);
+    this.ensureTexture("hero_sitting", 64, 96, 0xe8a87c);
     this.ensureTexture("trashcan", 48, 56, 0x888888);
-    this.ensureTexture("grandmother_avatar", 48, 48, 0xc9a0dc);
 
     this.scene.start("PrologueScene");
   }
 
-  /** If the texture is missing or is the built-in "__MISSING", create a colored rect. */
   private ensureTexture(key: string, w: number, h: number, color: number): void {
     const tex = this.textures.get(key);
     if (!tex || tex.key === "__MISSING") {

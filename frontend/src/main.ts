@@ -1,4 +1,6 @@
-import Phaser from "phaser";
 import { gameConfig } from "./gameConfig";
+import Phaser from "phaser";
 
-new Phaser.Game(gameConfig);
+const game = new Phaser.Game(gameConfig);
+
+export default game;

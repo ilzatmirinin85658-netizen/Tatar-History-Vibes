@@ -22,12 +22,10 @@ export class DialogueBox {
   private fullMessage = "";
   private charIndex = 0;
   private padding: number;
-  private boxWidth: number;
 
   constructor(config: DialogueBoxConfig) {
     this.scene = config.scene;
     this.padding = config.padding ?? 16;
-    this.boxWidth = config.width;
 
     // Semi-transparent background
     this.background = this.scene.add.graphics();

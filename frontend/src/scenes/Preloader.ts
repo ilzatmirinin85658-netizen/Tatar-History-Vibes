@@ -36,6 +36,7 @@ export class Preloader extends Phaser.Scene {
     this.ensureTexture("bg_courtyard", 390, 844, 0x2d4a3e);
     this.ensureTexture("hero_sitting", 64, 96, 0xe8a87c);
     this.ensureTexture("trashcan", 48, 56, 0x888888);
+    this.generateCloud();
 
     this.scene.start("PrologueScene");
   }
@@ -49,5 +50,16 @@ export class Preloader extends Phaser.Scene {
       g.generateTexture(key, w, h);
       g.destroy();
     }
+  }
+
+  private generateCloud(): void {
+    if (this.textures.exists("cloud")) return;
+    const g = this.make.graphics();
+    g.fillStyle(0xffffff, 0.8);
+    g.fillEllipse(50, 30, 80, 40);
+    g.fillEllipse(90, 25, 70, 35);
+    g.fillEllipse(130, 30, 60, 30);
+    g.generateTexture("cloud", 170, 60);
+    g.destroy();
   }
 }

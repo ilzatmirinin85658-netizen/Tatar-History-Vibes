@@ -1,6 +1,8 @@
 import Phaser from "phaser";
 import { DialogueBox } from "../ui/DialogueBox";
 
+const WORLD_HEIGHT = 2000;
+
 type PrologueState =
   | "INTRO_PAN"
   | "PHONE_RING"
@@ -21,19 +23,29 @@ export class PrologueScene extends Phaser.Scene {
   create(): void {
     const { width, height } = this.scale;
 
-    // --- Sky strip above the background ---
-    const skyHeight = height * 0.5;
-    this.add.rectangle(width / 2, skyHeight / 2, width, skyHeight, 0x6b8cae);
+    // --- Grey background filling entire world ---
+    this.add.rectangle(width / 2, WORLD_HEIGHT / 2, width, WORLD_HEIGHT, 0x707070);
 
-    // --- Background stretched 1.5x vertically, top-aligned ---
-    const bg = this.add.image(width / 2, 0, "bg_courtyard").setOrigin(0.5, 0);
-    bg.setDisplaySize(width, height * 1.5);
+    // --- Drifting clouds in the sky zone (Y: 0–500) ---
+    this.createClouds(width);
 
-    // --- Hero on the bench (lower area of the scene) ---
-    const heroY = height * 1.18;
-    const hero = this.add.image(width / 2, heroY, "hero_sitting");
-    const heroScale = (height * 0.32) / hero.height;
+    // --- Courtyard at the bottom of the world ---
+    const bg = this.add.image(width / 2, WORLD_HEIGHT, "bg_courtyard").setOrigin(0.5, 1);
+    const bgScale = width / bg.width;
+    bg.setScale(bgScale);
+
+    // --- Hero (draggable for debug positioning) ---
+    const hero = this.add.image(width / 2, WORLD_HEIGHT - 200, "hero_sitting");
+    const heroScale = (height * 0.3) / hero.height;
     hero.setScale(heroScale);
+
+    hero.setInteractive({ draggable: true });
+    this.input.setDraggable(hero);
+    hero.on("drag", (_pointer: Phaser.Input.Pointer, dragX: number, dragY: number) => {
+      hero.x = dragX;
+      hero.y = dragY;
+      console.log("Hero X:", Math.round(hero.x), "Hero Y:", Math.round(hero.y));
+    });
 
     // Breathing idle animation
     this.tweens.add({
@@ -45,7 +57,7 @@ export class PrologueScene extends Phaser.Scene {
       ease: "Sine.easeInOut",
     });
 
-    // --- Dialogue box (fixed to camera via setScrollFactor) ---
+    // --- Dialogue box (fixed to screen) ---
     const boxHeight = 150;
     this.dialogueBox = new DialogueBox({
       scene: this,
@@ -56,17 +68,42 @@ export class PrologueScene extends Phaser.Scene {
     });
     this.dialogueBox.getContainer().setScrollFactor(0);
 
-    // --- Camera: start at the top (sky), then pan down to the hero ---
+    // --- Camera setup ---
     const cam = this.cameras.main;
-    cam.setBounds(0, 0, width, height * 1.5);
+    cam.setBounds(0, 0, width, WORLD_HEIGHT);
     cam.setScroll(0, 0);
 
+    // Pan from sky down to the courtyard over 5 seconds
     this.state = "INTRO_PAN";
-    cam.pan(width / 2, height * 1.5 - height / 2, 4000, "Sine.easeInOut", false, (_cam, progress) => {
+    const panTargetY = WORLD_HEIGHT - height / 2;
+    cam.pan(width / 2, panTargetY, 5000, "Sine.easeInOut", false, (_cam, progress) => {
       if (progress === 1) {
         this.time.delayedCall(500, () => this.phoneRing());
       }
     });
+  }
+
+  private createClouds(worldWidth: number): void {
+    const cloudData = [
+      { x: 60, y: 80, scale: 1.0, speed: 8000 },
+      { x: 250, y: 180, scale: 0.7, speed: 12000 },
+      { x: 140, y: 320, scale: 0.9, speed: 10000 },
+      { x: 350, y: 120, scale: 0.6, speed: 14000 },
+      { x: 30, y: 420, scale: 0.8, speed: 11000 },
+    ];
+
+    for (const c of cloudData) {
+      const cloud = this.add.image(c.x, c.y, "cloud").setScale(c.scale).setAlpha(0.7);
+      this.tweens.add({
+        targets: cloud,
+        x: worldWidth + 100,
+        duration: c.speed,
+        repeat: -1,
+        onRepeat: () => {
+          cloud.x = -100;
+        },
+      });
+    }
   }
 
   private phoneRing(): void {

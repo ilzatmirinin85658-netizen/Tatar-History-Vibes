@@ -51,7 +51,7 @@ export class Preloader extends Phaser.Scene {
   private ensureTexture(key: string, w: number, h: number, color: number): void {
     const tex = this.textures.get(key);
     if (!tex || tex.key === "__MISSING") {
-      const g = this.make.graphics({ add: false });
+      const g = this.make.graphics();
       g.fillStyle(color, 1);
       g.fillRect(0, 0, w, h);
       g.generateTexture(key, w, h);

@@ -1,4 +1,8 @@
 import Phaser from "phaser";
+import bgImg from "../assets/images/bg_courtyard.png";
+import heroImg from "../assets/images/hero_idle.png";
+import trashcanImg from "../assets/images/trashcan.png";
+import grandmotherImg from "../assets/images/grandmother_avatar.png";
 
 /**
  * Preloader — generates colored-rectangle placeholders for every asset
@@ -29,12 +33,11 @@ export class Preloader extends Phaser.Scene {
       box.destroy();
     });
 
-    // Try loading real assets — if files are empty/broken Phaser will
-    // fire "loaderror" and we handle it in create().
-    this.load.image("bg_courtyard", "src/assets/images/bg_courtyard.png");
-    this.load.image("hero_idle", "src/assets/images/hero_idle.png");
-    this.load.image("trashcan", "src/assets/images/trashcan.png");
-    this.load.image("grandmother_avatar", "src/assets/images/grandmother_avatar.png");
+    // Load assets via bundled imports so paths resolve in production
+    this.load.image("bg_courtyard", bgImg);
+    this.load.image("hero_idle", heroImg);
+    this.load.image("trashcan", trashcanImg);
+    this.load.image("grandmother_avatar", grandmotherImg);
   }
 
   create(): void {

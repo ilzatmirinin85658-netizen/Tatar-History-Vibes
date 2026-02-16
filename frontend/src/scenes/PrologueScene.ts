@@ -2,7 +2,7 @@ import Phaser from "phaser";
 import { DialogueBox } from "../ui/DialogueBox";
 
 type PrologueState =
-  | "IDLE"
+  | "INTRO_PAN"
   | "PHONE_RING"
   | "WAITING_CHOICE"
   | "ANSWER_GRANDMA"
@@ -12,7 +12,7 @@ type PrologueState =
 
 export class PrologueScene extends Phaser.Scene {
   private dialogueBox!: DialogueBox;
-  private state: PrologueState = "IDLE";
+  private state: PrologueState = "INTRO_PAN";
 
   constructor() {
     super({ key: "PrologueScene" });
@@ -21,17 +21,31 @@ export class PrologueScene extends Phaser.Scene {
   create(): void {
     const { width, height } = this.scale;
 
-    // --- Background ---
-    const bg = this.add.image(width / 2, height / 2, "bg_courtyard");
-    bg.setDisplaySize(width, height);
+    // --- Sky strip above the background ---
+    const skyHeight = height * 0.5;
+    this.add.rectangle(width / 2, skyHeight / 2, width, skyHeight, 0x6b8cae);
 
-    // --- Hero sitting (lower third of the screen) ---
-    const hero = this.add.image(width / 2, height * 0.68, "hero_sitting");
-    const targetHeroHeight = height * 0.35;
-    const scaleRatio = targetHeroHeight / hero.height;
-    hero.setScale(scaleRatio);
+    // --- Background stretched 1.5x vertically, top-aligned ---
+    const bg = this.add.image(width / 2, 0, "bg_courtyard").setOrigin(0.5, 0);
+    bg.setDisplaySize(width, height * 1.5);
 
-    // --- Dialogue box at bottom ---
+    // --- Hero on the bench (lower area of the scene) ---
+    const heroY = height * 1.18;
+    const hero = this.add.image(width / 2, heroY, "hero_sitting");
+    const heroScale = (height * 0.32) / hero.height;
+    hero.setScale(heroScale);
+
+    // Breathing idle animation
+    this.tweens.add({
+      targets: hero,
+      scaleY: heroScale * 0.98,
+      duration: 2000,
+      yoyo: true,
+      repeat: -1,
+      ease: "Sine.easeInOut",
+    });
+
+    // --- Dialogue box (fixed to camera via setScrollFactor) ---
     const boxHeight = 150;
     this.dialogueBox = new DialogueBox({
       scene: this,
@@ -40,10 +54,19 @@ export class PrologueScene extends Phaser.Scene {
       width: width - 20,
       height: boxHeight,
     });
+    this.dialogueBox.getContainer().setScrollFactor(0);
 
-    // --- Start: 2 second pause, then phone rings ---
-    this.state = "IDLE";
-    this.time.delayedCall(2000, () => this.phoneRing());
+    // --- Camera: start at the top (sky), then pan down to the hero ---
+    const cam = this.cameras.main;
+    cam.setBounds(0, 0, width, height * 1.5);
+    cam.setScroll(0, 0);
+
+    this.state = "INTRO_PAN";
+    cam.pan(width / 2, height * 1.5 - height / 2, 4000, "Sine.easeInOut", false, (_cam, progress) => {
+      if (progress === 1) {
+        this.time.delayedCall(500, () => this.phoneRing());
+      }
+    });
   }
 
   private phoneRing(): void {
@@ -58,14 +81,8 @@ export class PrologueScene extends Phaser.Scene {
   private showPhoneChoices(): void {
     this.state = "WAITING_CHOICE";
     this.dialogueBox.showChoices([
-      {
-        text: "Взять трубку",
-        callback: () => this.onAnswer(),
-      },
-      {
-        text: "Сбросить",
-        callback: () => this.onDecline(),
-      },
+      { text: "Взять трубку", callback: () => this.onAnswer() },
+      { text: "Сбросить", callback: () => this.onDecline() },
     ]);
   }
 

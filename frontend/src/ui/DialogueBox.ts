@@ -9,9 +9,11 @@ export interface DialogueBoxConfig {
   padding?: number;
 }
 
-/**
- * Reusable dialogue box with speaker name and typewriter text effect.
- */
+export interface Choice {
+  text: string;
+  callback: () => void;
+}
+
 export class DialogueBox {
   private scene: Phaser.Scene;
   private container: Phaser.GameObjects.Container;
@@ -22,39 +24,37 @@ export class DialogueBox {
   private fullMessage = "";
   private charIndex = 0;
   private padding: number;
+  private boxWidth: number;
+  private boxHeight: number;
+  private choiceButtons: Phaser.GameObjects.Container[] = [];
+  private onCompleteCallback?: () => void;
 
   constructor(config: DialogueBoxConfig) {
     this.scene = config.scene;
     this.padding = config.padding ?? 16;
+    this.boxWidth = config.width;
+    this.boxHeight = config.height;
 
-    // Semi-transparent background
+    // Semi-transparent background with white border
     this.background = this.scene.add.graphics();
-    this.background.fillStyle(0x000000, 0.75);
-    this.background.fillRoundedRect(0, 0, config.width, config.height, 12);
-    this.background.lineStyle(2, 0xffffff, 0.3);
-    this.background.strokeRoundedRect(0, 0, config.width, config.height, 12);
+    this.drawBackground();
 
-    // Speaker name
-    this.speakerText = this.scene.add.text(this.padding, 8, "", {
-      fontFamily: "Arial, sans-serif",
-      fontSize: "16px",
+    // Speaker name — yellow, monospace
+    this.speakerText = this.scene.add.text(this.padding, 10, "", {
+      fontFamily: '"Courier New", Courier, monospace',
+      fontSize: "15px",
       color: "#f5c842",
       fontStyle: "bold",
     });
 
-    // Body text
-    this.bodyText = this.scene.add.text(
-      this.padding,
-      32,
-      "",
-      {
-        fontFamily: "Arial, sans-serif",
-        fontSize: "14px",
-        color: "#ffffff",
-        wordWrap: { width: config.width - this.padding * 2 },
-        lineSpacing: 4,
-      },
-    );
+    // Body text — white, monospace, word-wrapped
+    this.bodyText = this.scene.add.text(this.padding, 34, "", {
+      fontFamily: '"Courier New", Courier, monospace',
+      fontSize: "14px",
+      color: "#ffffff",
+      wordWrap: { width: this.boxWidth - this.padding * 2 },
+      lineSpacing: 4,
+    });
 
     this.container = this.scene.add.container(config.x, config.y, [
       this.background,
@@ -66,13 +66,26 @@ export class DialogueBox {
     this.hide();
   }
 
-  /** Display text with typewriter effect. */
-  show(speaker: string, message: string, onComplete?: () => void): void {
+  private drawBackground(): void {
+    this.background.clear();
+    this.background.fillStyle(0x000000, 0.8);
+    this.background.fillRoundedRect(0, 0, this.boxWidth, this.boxHeight, 10);
+    this.background.lineStyle(2, 0xffffff, 0.9);
+    this.background.strokeRoundedRect(0, 0, this.boxWidth, this.boxHeight, 10);
+  }
+
+  showDialogue(
+    name: string,
+    text: string,
+    onComplete?: () => void,
+  ): void {
+    this.clearChoices();
     this.container.setVisible(true);
-    this.speakerText.setText(speaker);
+    this.speakerText.setText(name);
     this.bodyText.setText("");
-    this.fullMessage = message;
+    this.fullMessage = text;
     this.charIndex = 0;
+    this.onCompleteCallback = onComplete;
 
     if (this.timer) {
       this.timer.destroy();
@@ -87,14 +100,77 @@ export class DialogueBox {
         if (this.charIndex >= this.fullMessage.length) {
           this.timer?.destroy();
           this.timer = undefined;
-          if (onComplete) onComplete();
+          if (this.onCompleteCallback) this.onCompleteCallback();
         }
       },
       loop: true,
     });
   }
 
-  /** Immediately complete current typewriter animation. */
+  showChoices(choices: Choice[]): void {
+    this.clearChoices();
+
+    const btnW = this.boxWidth - this.padding * 2;
+    const btnH = 36;
+    const gap = 8;
+    const totalH = choices.length * btnH + (choices.length - 1) * gap;
+    const startY = -totalH - 10; // above the dialogue box
+
+    choices.forEach((choice, i) => {
+      const y = startY + i * (btnH + gap);
+      const btnGfx = this.scene.add.graphics();
+      btnGfx.fillStyle(0x1a1a2e, 0.9);
+      btnGfx.fillRoundedRect(0, 0, btnW, btnH, 8);
+      btnGfx.lineStyle(1, 0xffffff, 0.7);
+      btnGfx.strokeRoundedRect(0, 0, btnW, btnH, 8);
+
+      const label = this.scene.add.text(btnW / 2, btnH / 2, choice.text, {
+        fontFamily: '"Courier New", Courier, monospace',
+        fontSize: "14px",
+        color: "#ffffff",
+      }).setOrigin(0.5);
+
+      const hitZone = this.scene.add
+        .zone(0, 0, btnW, btnH)
+        .setOrigin(0)
+        .setInteractive({ useHandCursor: true });
+
+      hitZone.on("pointerover", () => {
+        btnGfx.clear();
+        btnGfx.fillStyle(0x2a7a4b, 0.95);
+        btnGfx.fillRoundedRect(0, 0, btnW, btnH, 8);
+        btnGfx.lineStyle(1, 0xffffff, 1);
+        btnGfx.strokeRoundedRect(0, 0, btnW, btnH, 8);
+      });
+
+      hitZone.on("pointerout", () => {
+        btnGfx.clear();
+        btnGfx.fillStyle(0x1a1a2e, 0.9);
+        btnGfx.fillRoundedRect(0, 0, btnW, btnH, 8);
+        btnGfx.lineStyle(1, 0xffffff, 0.7);
+        btnGfx.strokeRoundedRect(0, 0, btnW, btnH, 8);
+      });
+
+      hitZone.on("pointerdown", () => {
+        this.clearChoices();
+        choice.callback();
+      });
+
+      const btnContainer = this.scene.add.container(this.padding, y, [
+        btnGfx,
+        label,
+        hitZone,
+      ]);
+      this.choiceButtons.push(btnContainer);
+      this.container.add(btnContainer);
+    });
+  }
+
+  private clearChoices(): void {
+    this.choiceButtons.forEach((c) => c.destroy());
+    this.choiceButtons = [];
+  }
+
   skipToEnd(): void {
     if (this.timer) {
       this.timer.destroy();
@@ -103,7 +179,6 @@ export class DialogueBox {
     this.bodyText.setText(this.fullMessage);
   }
 
-  /** Check if typewriter is still animating. */
   isAnimating(): boolean {
     return this.timer != null;
   }
@@ -113,6 +188,7 @@ export class DialogueBox {
       this.timer.destroy();
       this.timer = undefined;
     }
+    this.clearChoices();
     this.container.setVisible(false);
   }
 

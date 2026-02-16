@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 import bgImg from "../assets/images/bg_courtyard.png";
-import heroSittingImg from "../assets/images/hero_sitting.png";
+import heroSittingImg from "../assets/images/hero_sitting_nobench.png";
 import trashcanImg from "../assets/images/trashcan.png";
 
 export class Preloader extends Phaser.Scene {

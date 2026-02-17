@@ -38,11 +38,11 @@ export class PrologueScene extends Phaser.Scene {
     // ==========================================================
     const sun = this.add.image(width / 2, 300, "sun");
     sun.setOrigin(0.5);
-    sun.setScale(0.15);
+    sun.setScale(2.5);
     this.tweens.add({
       targets: sun,
       angle: 360,
-      duration: 60000,
+      duration: 600000,
       repeat: -1,
     });
 
@@ -149,7 +149,7 @@ export class PrologueScene extends Phaser.Scene {
 
   // ---- Cloud belt at sky→roof seam ----
   private buildCloudBelt(skyHeight: number): void {
-    const seamY = skyHeight - 50;
+    const seamY = skyHeight - 200;
     const clouds = [
       { x: -20, dy: 0 }, { x: 80, dy: 15 }, { x: 190, dy: 5 },
       { x: 300, dy: 20 }, { x: 400, dy: 10 }, { x: 40, dy: 35 },
@@ -159,7 +159,7 @@ export class PrologueScene extends Phaser.Scene {
 
     for (const c of clouds) {
       const s = Phaser.Math.FloatBetween(0.8, 1.2);
-      const cloud = this.add.image(c.x, seamY + c.dy, "cloud").setScale(s).setAlpha(0.7);
+      const cloud = this.add.image(c.x, seamY + c.dy, "cloud").setScale(s).setAlpha(0.8);
       const drift = Phaser.Math.Between(30, 50);
       this.tweens.add({
         targets: cloud,

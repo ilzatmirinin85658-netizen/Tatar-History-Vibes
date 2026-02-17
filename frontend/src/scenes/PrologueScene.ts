@@ -123,13 +123,13 @@ export class PrologueScene extends Phaser.Scene {
   private createBirds(_worldWidth: number): void {
     const { width } = this.scale;
     const birdData = [
-      { y: 350, delay: 0 },
-      { y: 420, delay: 500 },
+      { y: 350, scale: 0.5, delay: 0 },
+      { y: 400, scale: 0.4, delay: 500 },
     ];
 
     for (const b of birdData) {
       const bird = this.add.sprite(-200, b.y, "bird_anim");
-      bird.setScale(2.5);
+      bird.setScale(b.scale);
       bird.setDepth(1.5);
       bird.play("bird_fly");
 

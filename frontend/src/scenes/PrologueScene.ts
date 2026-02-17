@@ -32,7 +32,6 @@ export class PrologueScene extends Phaser.Scene {
     const skyBg = this.add.image(width / 2, 0, "sky_bg").setOrigin(0.5, 0);
     skyBg.setDisplaySize(width, skyBg.height * (width / skyBg.width));
     skyBg.setDepth(0);
-    const skyHeight = skyBg.displayHeight; // ≈ 683
 
     // ==========================================================
     // SUN — static image, no rotation

@@ -43,9 +43,9 @@ export class PrologueScene extends Phaser.Scene {
     sun.setDepth(1);
 
     // ==========================================================
-    // BIRDS — 3 sprites, fly once left→right, then destroy
+    // BIRDS — 2 sprites, fly once left→right, then destroy
     // ==========================================================
-    this.createBirds(width);
+    const birds = this.createBirds(width);
 
     // ==========================================================
     // LOWER LAYERS — roof starts exactly where sky ends
@@ -63,7 +63,7 @@ export class PrologueScene extends Phaser.Scene {
     roof.setDepth(0);
 
     // CLOUDS — seam mask at sky→roof transition
-    this.buildCloudBelt(skyHeight);
+    const clouds = this.buildCloudBelt(skyHeight);
 
     // Courtyard
     const bg = this.add.image(width / 2, WORLD_H, "bg_courtyard");
@@ -96,6 +96,25 @@ export class PrologueScene extends Phaser.Scene {
     cam.setScroll(0, 0);
     this.state = "INTRO_PAN";
 
+    // ==========================================================
+    // DEBUG DRAG-AND-DROP — move objects to find ideal positions
+    // ==========================================================
+    const draggables = [sun, ...clouds, ...birds, hero];
+    for (const obj of draggables) {
+      obj.setInteractive();
+    }
+    this.input.setDraggable(draggables);
+    this.input.on('drag', function (
+      _pointer: Phaser.Input.Pointer,
+      gameObject: Phaser.GameObjects.Sprite | Phaser.GameObjects.Image,
+      dragX: number,
+      dragY: number,
+    ) {
+      gameObject.x = dragX;
+      gameObject.y = dragY;
+      console.log('Object moved to:', Math.round(dragX), Math.round(dragY));
+    });
+
     // Trigger phone call after birds finish (~10s)
     this.time.delayedCall(10000, () => this.phoneRing());
   }
@@ -119,13 +138,14 @@ export class PrologueScene extends Phaser.Scene {
     });
   }
 
-  // ---- Birds: 2 big sprites, fly once left→right, then destroy ----
-  private createBirds(_worldWidth: number): void {
+  // ---- Birds: 2 small sprites, fly once left→right, then destroy ----
+  private createBirds(_worldWidth: number): Phaser.GameObjects.Sprite[] {
     const { width } = this.scale;
     const birdData = [
       { y: 350, scale: 0.1, delay: 0 },
       { y: 400, scale: 0.08, delay: 500 },
     ];
+    const sprites: Phaser.GameObjects.Sprite[] = [];
 
     for (const b of birdData) {
       const bird = this.add.sprite(-200, b.y, "bird_anim");
@@ -143,14 +163,16 @@ export class PrologueScene extends Phaser.Scene {
           bird.destroy();
         },
       });
+      sprites.push(bird);
     }
+    return sprites;
   }
 
   // ---- Dense cloud belt at sky→roof seam ----
-  private buildCloudBelt(skyHeight: number): void {
+  private buildCloudBelt(skyHeight: number): Phaser.GameObjects.Image[] {
     const seamY = skyHeight - 50;
     // 25 clouds packed tightly to fully cover the bottom of the sky
-    const clouds = [
+    const cloudPositions = [
       { x: -30, dy: -10 }, { x: 0, dy: 5 },   { x: 30, dy: -15 },
       { x: 60, dy: 10 },   { x: 90, dy: -5 },  { x: 120, dy: 15 },
       { x: 150, dy: 0 },   { x: 180, dy: -10 }, { x: 210, dy: 5 },
@@ -163,7 +185,8 @@ export class PrologueScene extends Phaser.Scene {
       { x: 345, dy: 20 },  { x: 405, dy: 25 },   { x: 135, dy: 35 },
     ];
 
-    for (const c of clouds) {
+    const sprites: Phaser.GameObjects.Image[] = [];
+    for (const c of cloudPositions) {
       const s = Phaser.Math.FloatBetween(0.5, 0.7);
       const cloud = this.add.image(c.x, seamY + c.dy, "cloud").setScale(s).setAlpha(0.8).setDepth(2);
       const drift = Phaser.Math.Between(20, 40);
@@ -175,7 +198,9 @@ export class PrologueScene extends Phaser.Scene {
         repeat: -1,
         ease: "Sine.easeInOut",
       });
+      sprites.push(cloud);
     }
+    return sprites;
   }
 
   // ---- Dialogue logic ----

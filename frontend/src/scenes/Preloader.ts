@@ -31,24 +31,18 @@ export class Preloader extends Phaser.Scene {
       box.destroy();
     });
 
-    // Static assets
+    // Static images
     this.load.image("bg_courtyard", bgImg);
     this.load.image("cloud", cloudImg);
     this.load.image("roof_grey", roofImg);
-    this.load.image("wall", wallImg);
+    this.load.image("sun_static", sunSheetImg);
+    this.load.image("wall_img", wallImg);
 
-    // Spritesheets (frame sizes derived from actual image dimensions)
-    // sun_sheet.png: 706×1280 → 1 col × 4 rows
-    this.load.spritesheet("sun_anim", sunSheetImg, {
-      frameWidth: 706,
-      frameHeight: 320,
-    });
-    // bird_sheet.png: 1280×698 → 4 cols × 1 row
+    // Spritesheets
     this.load.spritesheet("bird_anim", birdSheetImg, {
       frameWidth: 320,
       frameHeight: 698,
     });
-    // hero_sheet.png: 1280×675 → 4 cols × 1 row
     this.load.spritesheet("hero_anim", heroSheetImg, {
       frameWidth: 320,
       frameHeight: 675,
@@ -59,7 +53,8 @@ export class Preloader extends Phaser.Scene {
     this.ensureTexture("bg_courtyard", 390, 844, 0x2d4a3e);
     this.ensureTexture("cloud", 170, 60, 0xffffff);
     this.ensureTexture("roof_grey", 390, 300, 0x888888);
-    this.ensureTexture("wall", 128, 128, 0x555555);
+    this.ensureTexture("sun_static", 200, 200, 0xffe066);
+    this.ensureTexture("wall_img", 128, 128, 0x555555);
 
     this.scene.start("PrologueScene");
   }

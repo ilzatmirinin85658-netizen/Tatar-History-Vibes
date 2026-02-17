@@ -168,31 +168,25 @@ export class PrologueScene extends Phaser.Scene {
     return sprites;
   }
 
-  // ---- Dense cloud belt at sky→roof seam ----
+  // ---- 5 large clouds at sky→roof seam ----
   private buildCloudBelt(skyHeight: number): Phaser.GameObjects.Image[] {
+    const { width } = this.scale;
     const seamY = skyHeight - 50;
-    // 25 clouds packed tightly to fully cover the bottom of the sky
-    const cloudPositions = [
-      { x: -30, dy: -10 }, { x: 0, dy: 5 },   { x: 30, dy: -15 },
-      { x: 60, dy: 10 },   { x: 90, dy: -5 },  { x: 120, dy: 15 },
-      { x: 150, dy: 0 },   { x: 180, dy: -10 }, { x: 210, dy: 5 },
-      { x: 240, dy: -15 }, { x: 270, dy: 10 },  { x: 300, dy: 0 },
-      { x: 330, dy: -5 },  { x: 360, dy: 15 },  { x: 390, dy: -10 },
-      { x: 420, dy: 5 },
-      // second row slightly lower
-      { x: -15, dy: 20 },  { x: 45, dy: 25 },   { x: 105, dy: 30 },
-      { x: 165, dy: 20 },  { x: 225, dy: 25 },   { x: 285, dy: 30 },
-      { x: 345, dy: 20 },  { x: 405, dy: 25 },   { x: 135, dy: 35 },
-    ];
-
     const sprites: Phaser.GameObjects.Image[] = [];
-    for (const c of cloudPositions) {
-      const s = Phaser.Math.FloatBetween(0.5, 0.7);
-      const cloud = this.add.image(c.x, seamY + c.dy, "cloud").setScale(s).setAlpha(0.8).setDepth(2);
+
+    for (let i = 0; i < 5; i++) {
+      const x = (width / 5) * i + width / 10;
+      const s = Phaser.Math.FloatBetween(0.8, 1.2);
+      const cloud = this.add
+        .image(x, seamY, "cloud")
+        .setScale(s)
+        .setAlpha(0.8)
+        .setDepth(50);
+
       const drift = Phaser.Math.Between(20, 40);
       this.tweens.add({
         targets: cloud,
-        x: c.x + drift,
+        x: x + drift,
         duration: Phaser.Math.Between(14000, 22000),
         yoyo: true,
         repeat: -1,

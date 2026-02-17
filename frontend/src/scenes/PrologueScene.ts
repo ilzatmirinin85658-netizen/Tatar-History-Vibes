@@ -37,10 +37,11 @@ export class PrologueScene extends Phaser.Scene {
     // ==========================================================
     // SUN — single image, slow rotation
     // ==========================================================
-    const sun = this.add.image(width / 2, 250, "sun");
+    const sun = this.add.image(width / 2, 200, "sun");
     sun.setOrigin(0.5);
-    sun.setScale(1.5);
-    sun.setDepth(1);
+    sun.setScale(0.5);
+    sun.setDepth(100);
+    console.log("Sun bounds:", sun.getBounds());
     this.tweens.add({
       targets: sun,
       angle: 360,
@@ -63,8 +64,8 @@ export class PrologueScene extends Phaser.Scene {
       .setOrigin(0.5, 0.5);
     wallTile.setTileScale(0.5, 0.5);
 
-    // Roof — top edge at skyHeight
-    const roof = this.add.image(width / 2, skyHeight, "roof_grey").setOrigin(0.5, 0);
+    // Roof — top edge below skyHeight, clouds cover the gap
+    const roof = this.add.image(width / 2, skyHeight + 50, "roof_grey").setOrigin(0.5, 0);
     roof.setDisplaySize(width, roof.height * (width / roof.width));
 
     // CLOUDS — seam mask at sky→roof transition
@@ -161,8 +162,8 @@ export class PrologueScene extends Phaser.Scene {
     ];
 
     for (const c of clouds) {
-      const s = Phaser.Math.FloatBetween(0.8, 1.2);
-      const cloud = this.add.image(c.x, seamY + c.dy, "cloud").setScale(s).setAlpha(0.8).setDepth(2);
+      const s = Phaser.Math.FloatBetween(0.5, 0.8);
+      const cloud = this.add.image(c.x, seamY + c.dy, "cloud").setScale(s).setAlpha(0.8).setDepth(50);
       const drift = Phaser.Math.Between(30, 50);
       this.tweens.add({
         targets: cloud,

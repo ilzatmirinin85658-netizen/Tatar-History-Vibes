@@ -35,24 +35,12 @@ export class PrologueScene extends Phaser.Scene {
     const skyHeight = skyBg.displayHeight; // ≈ 683
 
     // ==========================================================
-    // SUN — single image, slow rotation
+    // SUN — static image, no rotation
     // ==========================================================
-    const sunX = width / 2;
-    const sunY = 400;
-    const sun = this.add.image(sunX, sunY, "sun");
+    const sun = this.add.image(width / 2, 400, "sun");
     sun.setOrigin(0.5);
     sun.setScale(0.5);
     sun.setDepth(1);
-    this.tweens.add({
-      targets: sun,
-      angle: 360,
-      duration: 600000,
-      repeat: -1,
-      onUpdate: () => {
-        sun.x = sunX;
-        sun.y = sunY;
-      },
-    });
 
     // ==========================================================
     // BIRDS — 3 sprites, fly once left→right, then destroy
@@ -131,24 +119,24 @@ export class PrologueScene extends Phaser.Scene {
     });
   }
 
-  // ---- Birds: fly once, destroy on complete ----
-  private createBirds(worldWidth: number): void {
+  // ---- Birds: 2 big sprites, fly once left→right, then destroy ----
+  private createBirds(_worldWidth: number): void {
+    const { width } = this.scale;
     const birdData = [
-      { y: 380, scale: 0.08, dur: 7000, delay: 0 },
-      { y: 440, scale: 0.06, dur: 8000, delay: 1200 },
-      { y: 410, scale: 0.07, dur: 7500, delay: 600 },
+      { y: 350, delay: 0 },
+      { y: 420, delay: 500 },
     ];
 
     for (const b of birdData) {
-      const bird = this.add.sprite(-100, b.y, "bird_anim");
-      bird.setScale(b.scale);
+      const bird = this.add.sprite(-200, b.y, "bird_anim");
+      bird.setScale(2.5);
       bird.setDepth(1.5);
       bird.play("bird_fly");
 
       this.tweens.add({
         targets: bird,
-        x: worldWidth + 100,
-        duration: b.dur,
+        x: width + 200,
+        duration: 7000,
         delay: b.delay,
         onComplete: () => {
           bird.destroy();

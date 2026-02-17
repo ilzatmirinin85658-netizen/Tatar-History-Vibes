@@ -37,7 +37,9 @@ export class PrologueScene extends Phaser.Scene {
     // ==========================================================
     // SUN — single image, slow rotation
     // ==========================================================
-    const sun = this.add.image(width / 2, 400, "sun");
+    const sunX = width / 2;
+    const sunY = 400;
+    const sun = this.add.image(sunX, sunY, "sun");
     sun.setOrigin(0.5);
     sun.setScale(0.5);
     sun.setDepth(1);
@@ -46,6 +48,10 @@ export class PrologueScene extends Phaser.Scene {
       angle: 360,
       duration: 600000,
       repeat: -1,
+      onUpdate: () => {
+        sun.x = sunX;
+        sun.y = sunY;
+      },
     });
 
     // ==========================================================

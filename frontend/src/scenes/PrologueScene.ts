@@ -123,8 +123,8 @@ export class PrologueScene extends Phaser.Scene {
   private createBirds(_worldWidth: number): void {
     const { width } = this.scale;
     const birdData = [
-      { y: 350, scale: 0.5, delay: 0 },
-      { y: 400, scale: 0.4, delay: 500 },
+      { y: 350, scale: 0.25, delay: 0 },
+      { y: 420, scale: 0.2, delay: 500 },
     ];
 
     for (const b of birdData) {

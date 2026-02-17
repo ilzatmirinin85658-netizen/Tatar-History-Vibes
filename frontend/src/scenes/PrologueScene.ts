@@ -57,13 +57,13 @@ export class PrologueScene extends Phaser.Scene {
       .setOrigin(0.5, 0.5);
     wallTile.setTileScale(0.5, 0.5);
 
-    // Roof — hidden below clouds
-    const roof = this.add.image(width / 2, skyHeight + 50, "roof_grey").setOrigin(0.5, 0);
+    // Roof — starts UNDER the clouds
+    const roof = this.add.image(width / 2, 1250, "roof_grey").setOrigin(0.5, 0);
     roof.setDisplaySize(width, roof.height * (width / roof.width));
     roof.setDepth(0);
 
-    // CLOUDS — seam mask at sky→roof transition
-    const clouds = this.buildCloudBelt(skyHeight);
+    // CLOUDS — 5 large sprites at Y≈1200, below first screen
+    const clouds = this.buildCloudBelt();
 
     // Courtyard
     const bg = this.add.image(width / 2, WORLD_H, "bg_courtyard");
@@ -89,12 +89,17 @@ export class PrologueScene extends Phaser.Scene {
     this.dialogueBox.getContainer().setScrollFactor(0);
 
     // ==========================================================
-    // CAMERA — fixed at Y=0 for now (sky tuning mode)
+    // CAMERA — start at sky, then pan down to hero
     // ==========================================================
     const cam = this.cameras.main;
     cam.setBounds(0, 0, WORLD_W, WORLD_H);
     cam.setScroll(0, 0);
     this.state = "INTRO_PAN";
+
+    // Wait 2s at the sky, then pan to hero over 11s
+    this.time.delayedCall(2000, () => {
+      cam.pan(width / 2, 3900, 11000, "Sine.easeInOut");
+    });
 
     // ==========================================================
     // DEBUG DRAG-AND-DROP — move objects to find ideal positions
@@ -168,17 +173,17 @@ export class PrologueScene extends Phaser.Scene {
     return sprites;
   }
 
-  // ---- 5 large clouds at sky→roof seam ----
-  private buildCloudBelt(skyHeight: number): Phaser.GameObjects.Image[] {
+  // ---- 5 large clouds at Y≈1200 ----
+  private buildCloudBelt(): Phaser.GameObjects.Image[] {
     const { width } = this.scale;
-    const seamY = skyHeight - 50;
     const sprites: Phaser.GameObjects.Image[] = [];
 
     for (let i = 0; i < 5; i++) {
       const x = (width / 5) * i + width / 10;
+      const y = Phaser.Math.Between(1150, 1250);
       const s = Phaser.Math.FloatBetween(0.8, 1.2);
       const cloud = this.add
-        .image(x, seamY, "cloud")
+        .image(x, y, "cloud")
         .setScale(s)
         .setAlpha(0.8)
         .setDepth(50);

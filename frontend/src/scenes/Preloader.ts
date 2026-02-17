@@ -3,7 +3,7 @@ import bgImg from "../assets/images/bg_courtyard.png";
 import cloudImg from "../assets/images/cloud.png";
 import roofImg from "../assets/images/roof_grey.png";
 import wallImg from "../assets/images/wall.png";
-import sunSheetImg from "../assets/images/sun_sheet.png";
+import sunImg from "../assets/images/sun.png";
 import birdSheetImg from "../assets/images/bird_sheet.png";
 import heroSheetImg from "../assets/images/hero_sheet.png";
 
@@ -35,8 +35,8 @@ export class Preloader extends Phaser.Scene {
     this.load.image("bg_courtyard", bgImg);
     this.load.image("cloud", cloudImg);
     this.load.image("roof_grey", roofImg);
-    this.load.image("sun_static", sunSheetImg);
     this.load.image("wall_img", wallImg);
+    this.load.image("sun", sunImg);
 
     // Spritesheets
     this.load.spritesheet("bird_anim", birdSheetImg, {
@@ -53,8 +53,8 @@ export class Preloader extends Phaser.Scene {
     this.ensureTexture("bg_courtyard", 390, 844, 0x2d4a3e);
     this.ensureTexture("cloud", 170, 60, 0xffffff);
     this.ensureTexture("roof_grey", 390, 300, 0x888888);
-    this.ensureTexture("sun_static", 200, 200, 0xffe066);
     this.ensureTexture("wall_img", 128, 128, 0x555555);
+    this.ensureTexture("sun", 200, 200, 0xffe066);
 
     this.scene.start("PrologueScene");
   }

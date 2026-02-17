@@ -1,10 +1,11 @@
 import Phaser from "phaser";
 import bgImg from "../assets/images/bg_courtyard.png";
-import heroSittingImg from "../assets/images/hero_sitting_nobench.png";
-import sunImg from "../assets/images/sun.png";
 import cloudImg from "../assets/images/cloud.png";
 import roofImg from "../assets/images/roof_grey.png";
 import wallImg from "../assets/images/wall.png";
+import sunSheetImg from "../assets/images/sun_sheet.png";
+import birdSheetImg from "../assets/images/bird_sheet.png";
+import heroSheetImg from "../assets/images/hero_sheet.png";
 
 export class Preloader extends Phaser.Scene {
   constructor() {
@@ -30,18 +31,32 @@ export class Preloader extends Phaser.Scene {
       box.destroy();
     });
 
+    // Static assets
     this.load.image("bg_courtyard", bgImg);
-    this.load.image("hero_sitting", heroSittingImg);
-    this.load.image("sun", sunImg);
     this.load.image("cloud", cloudImg);
     this.load.image("roof_grey", roofImg);
     this.load.image("wall", wallImg);
+
+    // Spritesheets (frame sizes derived from actual image dimensions)
+    // sun_sheet.png: 706×1280 → 1 col × 4 rows
+    this.load.spritesheet("sun_anim", sunSheetImg, {
+      frameWidth: 706,
+      frameHeight: 320,
+    });
+    // bird_sheet.png: 1280×698 → 4 cols × 1 row
+    this.load.spritesheet("bird_anim", birdSheetImg, {
+      frameWidth: 320,
+      frameHeight: 698,
+    });
+    // hero_sheet.png: 1280×675 → 4 cols × 1 row
+    this.load.spritesheet("hero_anim", heroSheetImg, {
+      frameWidth: 320,
+      frameHeight: 675,
+    });
   }
 
   create(): void {
     this.ensureTexture("bg_courtyard", 390, 844, 0x2d4a3e);
-    this.ensureTexture("hero_sitting", 64, 96, 0xe8a87c);
-    this.ensureTexture("sun", 200, 200, 0xffe066);
     this.ensureTexture("cloud", 170, 60, 0xffffff);
     this.ensureTexture("roof_grey", 390, 300, 0x888888);
     this.ensureTexture("wall", 128, 128, 0x555555);

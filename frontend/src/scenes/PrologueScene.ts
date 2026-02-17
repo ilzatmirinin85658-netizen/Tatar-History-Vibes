@@ -37,11 +37,10 @@ export class PrologueScene extends Phaser.Scene {
     // ==========================================================
     // SUN — single image, slow rotation
     // ==========================================================
-    const sun = this.add.image(width / 2, 200, "sun");
+    const sun = this.add.image(width / 2, 400, "sun");
     sun.setOrigin(0.5);
     sun.setScale(0.5);
-    sun.setDepth(100);
-    console.log("Sun bounds:", sun.getBounds());
+    sun.setDepth(1);
     this.tweens.add({
       targets: sun,
       angle: 360,
@@ -64,9 +63,10 @@ export class PrologueScene extends Phaser.Scene {
       .setOrigin(0.5, 0.5);
     wallTile.setTileScale(0.5, 0.5);
 
-    // Roof — top edge below skyHeight, clouds cover the gap
+    // Roof — hidden below clouds
     const roof = this.add.image(width / 2, skyHeight + 50, "roof_grey").setOrigin(0.5, 0);
     roof.setDisplaySize(width, roof.height * (width / roof.width));
+    roof.setDepth(0);
 
     // CLOUDS — seam mask at sky→roof transition
     this.buildCloudBelt(skyHeight);
@@ -151,20 +151,27 @@ export class PrologueScene extends Phaser.Scene {
     }
   }
 
-  // ---- Cloud belt at sky→roof seam ----
+  // ---- Dense cloud belt at sky→roof seam ----
   private buildCloudBelt(skyHeight: number): void {
     const seamY = skyHeight - 50;
+    // 25 clouds packed tightly to fully cover the bottom of the sky
     const clouds = [
-      { x: -20, dy: -10 }, { x: 80, dy: 15 }, { x: 190, dy: -5 },
-      { x: 300, dy: 20 }, { x: 400, dy: 0 }, { x: 40, dy: 25 },
-      { x: 150, dy: -15 }, { x: 260, dy: 10 }, { x: 370, dy: 30 },
-      { x: -10, dy: -25 }, { x: 100, dy: 5 }, { x: 220, dy: -20 },
+      { x: -30, dy: -10 }, { x: 0, dy: 5 },   { x: 30, dy: -15 },
+      { x: 60, dy: 10 },   { x: 90, dy: -5 },  { x: 120, dy: 15 },
+      { x: 150, dy: 0 },   { x: 180, dy: -10 }, { x: 210, dy: 5 },
+      { x: 240, dy: -15 }, { x: 270, dy: 10 },  { x: 300, dy: 0 },
+      { x: 330, dy: -5 },  { x: 360, dy: 15 },  { x: 390, dy: -10 },
+      { x: 420, dy: 5 },
+      // second row slightly lower
+      { x: -15, dy: 20 },  { x: 45, dy: 25 },   { x: 105, dy: 30 },
+      { x: 165, dy: 20 },  { x: 225, dy: 25 },   { x: 285, dy: 30 },
+      { x: 345, dy: 20 },  { x: 405, dy: 25 },   { x: 135, dy: 35 },
     ];
 
     for (const c of clouds) {
-      const s = Phaser.Math.FloatBetween(0.5, 0.8);
-      const cloud = this.add.image(c.x, seamY + c.dy, "cloud").setScale(s).setAlpha(0.8).setDepth(50);
-      const drift = Phaser.Math.Between(30, 50);
+      const s = Phaser.Math.FloatBetween(0.5, 0.7);
+      const cloud = this.add.image(c.x, seamY + c.dy, "cloud").setScale(s).setAlpha(0.8).setDepth(2);
+      const drift = Phaser.Math.Between(20, 40);
       this.tweens.add({
         targets: cloud,
         x: c.x + drift,

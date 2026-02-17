@@ -31,14 +31,16 @@ export class PrologueScene extends Phaser.Scene {
     // ==========================================================
     const skyBg = this.add.image(width / 2, 0, "sky_bg").setOrigin(0.5, 0);
     skyBg.setDisplaySize(width, skyBg.height * (width / skyBg.width));
+    skyBg.setDepth(0);
     const skyHeight = skyBg.displayHeight; // ≈ 683
 
     // ==========================================================
     // SUN — single image, slow rotation
     // ==========================================================
-    const sun = this.add.image(width / 2, 300, "sun");
+    const sun = this.add.image(width / 2, 250, "sun");
     sun.setOrigin(0.5);
-    sun.setScale(2.5);
+    sun.setScale(1.5);
+    sun.setDepth(1);
     this.tweens.add({
       targets: sun,
       angle: 360,
@@ -133,6 +135,7 @@ export class PrologueScene extends Phaser.Scene {
     for (const b of birdData) {
       const bird = this.add.sprite(-100, b.y, "bird_anim");
       bird.setScale(b.scale);
+      bird.setDepth(1.5);
       bird.play("bird_fly");
 
       this.tweens.add({
@@ -149,17 +152,17 @@ export class PrologueScene extends Phaser.Scene {
 
   // ---- Cloud belt at sky→roof seam ----
   private buildCloudBelt(skyHeight: number): void {
-    const seamY = skyHeight - 200;
+    const seamY = skyHeight - 50;
     const clouds = [
-      { x: -20, dy: 0 }, { x: 80, dy: 15 }, { x: 190, dy: 5 },
-      { x: 300, dy: 20 }, { x: 400, dy: 10 }, { x: 40, dy: 35 },
-      { x: 150, dy: 45 }, { x: 260, dy: 30 }, { x: 370, dy: 50 },
-      { x: -10, dy: 60 }, { x: 100, dy: 70 }, { x: 220, dy: 65 },
+      { x: -20, dy: -10 }, { x: 80, dy: 15 }, { x: 190, dy: -5 },
+      { x: 300, dy: 20 }, { x: 400, dy: 0 }, { x: 40, dy: 25 },
+      { x: 150, dy: -15 }, { x: 260, dy: 10 }, { x: 370, dy: 30 },
+      { x: -10, dy: -25 }, { x: 100, dy: 5 }, { x: 220, dy: -20 },
     ];
 
     for (const c of clouds) {
       const s = Phaser.Math.FloatBetween(0.8, 1.2);
-      const cloud = this.add.image(c.x, seamY + c.dy, "cloud").setScale(s).setAlpha(0.8);
+      const cloud = this.add.image(c.x, seamY + c.dy, "cloud").setScale(s).setAlpha(0.8).setDepth(2);
       const drift = Phaser.Math.Between(30, 50);
       this.tweens.add({
         targets: cloud,

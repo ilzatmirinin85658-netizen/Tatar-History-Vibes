@@ -1,7 +1,8 @@
 import Phaser from "phaser";
 import { DialogueBox } from "../ui/DialogueBox";
 
-const WORLD_HEIGHT = 2000;
+const WORLD_W = 390;
+const WORLD_H = 3000;
 
 type PrologueState =
   | "INTRO_PAN"
@@ -23,31 +24,45 @@ export class PrologueScene extends Phaser.Scene {
   create(): void {
     const { width, height } = this.scale;
 
-    // --- Grey background filling entire world ---
-    this.add.rectangle(width / 2, WORLD_HEIGHT / 2, width, WORLD_HEIGHT, 0x707070);
+    // ========== LAYER 1: Sky gradient (Y: 0–1000) ==========
+    this.buildSkyGradient(width);
 
-    // --- Drifting clouds in the sky zone (Y: 0–500) ---
-    this.createClouds(width);
+    // Sun
+    const sun = this.add.image(width * 0.75, 150, "sun").setScale(1.5).setAlpha(0.9);
+    this.tweens.add({
+      targets: sun,
+      angle: 360,
+      duration: 60000,
+      repeat: -1,
+    });
 
-    // --- Courtyard at the bottom of the world ---
-    const bg = this.add.image(width / 2, WORLD_HEIGHT, "bg_courtyard").setOrigin(0.5, 1);
+    // ========== LAYER 2: Cloud barrier (Y: 900–1200) ==========
+    this.buildCloudLayer(width);
+
+    // ========== LAYER 3: Roof (Y: 1200–1800) ==========
+    const roof = this.add.image(width / 2, 1200, "roof_grey").setOrigin(0.5, 0);
+    roof.setDisplaySize(width, 600);
+
+    // ========== LAYER 4: Wall (Y: 1800–2400) ==========
+    const wallTex = this.textures.get("wall");
+    const wallFrame = wallTex.get(0);
+    const wallTile = this.add.tileSprite(
+      0, 1800, width, 600,
+      "wall",
+    ).setOrigin(0, 0);
+    wallTile.setTileScale(width / wallFrame.width, 600 / (wallFrame.height * 4));
+
+    // ========== LAYER 5: Courtyard (Y: 2400–3000) ==========
+    const bg = this.add.image(width / 2, WORLD_H, "bg_courtyard").setOrigin(0.5, 1);
     const bgScale = width / bg.width;
     bg.setScale(bgScale);
 
-    // --- Hero (draggable for debug positioning) ---
-    const hero = this.add.image(width / 2, WORLD_HEIGHT - 200, "hero_sitting");
-    const heroScale = (height * 0.3) / hero.height;
+    // Hero on the bench
+    const hero = this.add.image(142, 2884, "hero_sitting");
+    const heroScale = (height * 0.28) / hero.height;
     hero.setScale(heroScale);
 
-    hero.setInteractive({ draggable: true });
-    this.input.setDraggable(hero);
-    hero.on("drag", (_pointer: Phaser.Input.Pointer, dragX: number, dragY: number) => {
-      hero.x = dragX;
-      hero.y = dragY;
-      console.log("Hero X:", Math.round(hero.x), "Hero Y:", Math.round(hero.y));
-    });
-
-    // Breathing idle animation
+    // Breathing animation
     this.tweens.add({
       targets: hero,
       scaleY: heroScale * 0.98,
@@ -57,7 +72,7 @@ export class PrologueScene extends Phaser.Scene {
       ease: "Sine.easeInOut",
     });
 
-    // --- Dialogue box (fixed to screen) ---
+    // ========== Dialogue box (fixed to viewport) ==========
     const boxHeight = 150;
     this.dialogueBox = new DialogueBox({
       scene: this,
@@ -68,43 +83,76 @@ export class PrologueScene extends Phaser.Scene {
     });
     this.dialogueBox.getContainer().setScrollFactor(0);
 
-    // --- Camera setup ---
+    // ========== Camera: slow pan from sky to hero ==========
     const cam = this.cameras.main;
-    cam.setBounds(0, 0, width, WORLD_HEIGHT);
+    cam.setBounds(0, 0, WORLD_W, WORLD_H);
     cam.setScroll(0, 0);
 
-    // Pan from sky down to the courtyard over 5 seconds
     this.state = "INTRO_PAN";
-    const panTargetY = WORLD_HEIGHT - height / 2;
-    cam.pan(width / 2, panTargetY, 5000, "Sine.easeInOut", false, (_cam, progress) => {
-      if (progress === 1) {
-        this.time.delayedCall(500, () => this.phoneRing());
-      }
-    });
+    const panTargetY = 2900;
+    cam.pan(
+      width / 2,
+      panTargetY,
+      10000,
+      "Sine.easeInOut",
+      false,
+      (_cam, progress) => {
+        if (progress === 1) {
+          this.time.delayedCall(500, () => this.phoneRing());
+        }
+      },
+    );
   }
 
-  private createClouds(worldWidth: number): void {
-    const cloudData = [
-      { x: 60, y: 80, scale: 1.0, speed: 8000 },
-      { x: 250, y: 180, scale: 0.7, speed: 12000 },
-      { x: 140, y: 320, scale: 0.9, speed: 10000 },
-      { x: 350, y: 120, scale: 0.6, speed: 14000 },
-      { x: 30, y: 420, scale: 0.8, speed: 11000 },
+  // ---- Sky gradient via stacked rectangles ----
+  private buildSkyGradient(worldWidth: number): void {
+    const steps = 20;
+    const stripH = 1000 / steps;
+    const topR = 0x00, topG = 0xbf, topB = 0xff;
+    const botR = 0xff, botG = 0xff, botB = 0xff;
+
+    for (let i = 0; i < steps; i++) {
+      const t = i / (steps - 1);
+      const r = Math.round(topR + (botR - topR) * t);
+      const g = Math.round(topG + (botG - topG) * t);
+      const b = Math.round(topB + (botB - topB) * t);
+      const color = (r << 16) | (g << 8) | b;
+      this.add.rectangle(worldWidth / 2, i * stripH + stripH / 2, worldWidth, stripH + 1, color);
+    }
+  }
+
+  // ---- Dense cloud barrier ----
+  private buildCloudLayer(_worldWidth: number): void {
+    const clouds: { x: number; y: number; s: number; speed: number }[] = [
+      { x: -20, y: 920, s: 1.8, speed: 15000 },
+      { x: 80, y: 960, s: 2.2, speed: 18000 },
+      { x: 200, y: 900, s: 1.6, speed: 13000 },
+      { x: 320, y: 950, s: 2.0, speed: 16000 },
+      { x: 50, y: 1000, s: 2.4, speed: 20000 },
+      { x: 180, y: 1040, s: 1.9, speed: 17000 },
+      { x: 300, y: 1020, s: 2.1, speed: 14000 },
+      { x: -40, y: 1080, s: 2.3, speed: 19000 },
+      { x: 120, y: 1100, s: 1.7, speed: 16000 },
+      { x: 260, y: 1060, s: 2.0, speed: 15000 },
+      { x: 380, y: 1120, s: 1.8, speed: 18000 },
+      { x: 40, y: 1150, s: 2.2, speed: 21000 },
+      { x: 160, y: 1170, s: 1.5, speed: 12000 },
     ];
 
-    for (const c of cloudData) {
-      const cloud = this.add.image(c.x, c.y, "cloud").setScale(c.scale).setAlpha(0.7);
+    for (const c of clouds) {
+      const cloud = this.add.image(c.x, c.y, "cloud").setScale(c.s).setAlpha(0.85);
       this.tweens.add({
         targets: cloud,
-        x: worldWidth + 100,
+        x: c.x + 60,
         duration: c.speed,
+        yoyo: true,
         repeat: -1,
-        onRepeat: () => {
-          cloud.x = -100;
-        },
+        ease: "Sine.easeInOut",
       });
     }
   }
+
+  // ---- Dialogue / scenario logic ----
 
   private phoneRing(): void {
     this.state = "PHONE_RING";

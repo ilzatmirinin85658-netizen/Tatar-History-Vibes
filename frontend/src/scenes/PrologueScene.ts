@@ -27,16 +27,18 @@ export class PrologueScene extends Phaser.Scene {
     this.createAnimations();
 
     // ==========================================================
-    // SKY — gradient #87CEEB → white, 1200px tall
+    // SKY BACKGROUND — sky_bg.png stretched to screen width
     // ==========================================================
-    this.buildSkyGradient(width);
+    const skyBg = this.add.image(width / 2, 0, "sky_bg").setOrigin(0.5, 0);
+    skyBg.setDisplaySize(width, skyBg.height * (width / skyBg.width));
+    const skyHeight = skyBg.displayHeight; // ≈ 683
 
     // ==========================================================
     // SUN — single image, slow rotation
     // ==========================================================
     const sun = this.add.image(width / 2, 300, "sun");
     sun.setOrigin(0.5);
-    sun.setScale(0.5);
+    sun.setScale(0.15);
     this.tweens.add({
       targets: sun,
       angle: 360,
@@ -50,22 +52,21 @@ export class PrologueScene extends Phaser.Scene {
     this.createBirds(width);
 
     // ==========================================================
-    // Lower layers (kept for context, not the focus)
+    // LOWER LAYERS — roof starts exactly where sky ends
     // ==========================================================
 
-    // Wall (behind everything below clouds)
+    // Wall (behind roof and courtyard)
     const wallTile = this.add
       .tileSprite(width / 2, 2650, width, 1700, "wall_img")
       .setOrigin(0.5, 0.5);
     wallTile.setTileScale(0.5, 0.5);
 
-    // Roof — bottom edge at Y=1200, overlaps wall top
-    const roof = this.add.image(width / 2, 1200, "roof_grey");
-    roof.setOrigin(0.5, 1);
+    // Roof — top edge at skyHeight
+    const roof = this.add.image(width / 2, skyHeight, "roof_grey").setOrigin(0.5, 0);
     roof.setDisplaySize(width, roof.height * (width / roof.width));
 
-    // CLOUDS — transition belt Y=1100..1200, masks sky→roof seam
-    this.buildCloudBelt();
+    // CLOUDS — seam mask at sky→roof transition
+    this.buildCloudBelt(skyHeight);
 
     // Courtyard
     const bg = this.add.image(width / 2, WORLD_H, "bg_courtyard");
@@ -92,7 +93,6 @@ export class PrologueScene extends Phaser.Scene {
 
     // ==========================================================
     // CAMERA — fixed at Y=0 for now (sky tuning mode)
-    // Pan disabled; phone call on a timer so dialogue stays testable
     // ==========================================================
     const cam = this.cameras.main;
     cam.setBounds(0, 0, WORLD_W, WORLD_H);
@@ -122,30 +122,6 @@ export class PrologueScene extends Phaser.Scene {
     });
   }
 
-  // ---- Sky gradient: #87CEEB → white, 1200px ----
-  private buildSkyGradient(worldWidth: number): void {
-    const gradH = 1200;
-    const steps = 20;
-    const stripH = gradH / steps;
-    const topR = 0x87, topG = 0xce, topB = 0xeb;
-    const botR = 0xff, botG = 0xff, botB = 0xff;
-
-    for (let i = 0; i < steps; i++) {
-      const t = i / (steps - 1);
-      const r = Math.round(topR + (botR - topR) * t);
-      const g = Math.round(topG + (botG - topG) * t);
-      const b = Math.round(topB + (botB - topB) * t);
-      const color = (r << 16) | (g << 8) | b;
-      this.add.rectangle(
-        worldWidth / 2,
-        i * stripH + stripH / 2,
-        worldWidth,
-        stripH + 1,
-        color,
-      );
-    }
-  }
-
   // ---- Birds: fly once, destroy on complete ----
   private createBirds(worldWidth: number): void {
     const birdData = [
@@ -171,19 +147,19 @@ export class PrologueScene extends Phaser.Scene {
     }
   }
 
-  // ---- Cloud belt: Y=1100..1200, masks sky→roof transition ----
-  private buildCloudBelt(): void {
+  // ---- Cloud belt at sky→roof seam ----
+  private buildCloudBelt(skyHeight: number): void {
+    const seamY = skyHeight - 50;
     const clouds = [
-      { x: -20, y: 1100 }, { x: 80, y: 1115 }, { x: 190, y: 1105 },
-      { x: 300, y: 1120 }, { x: 400, y: 1110 }, { x: 40, y: 1135 },
-      { x: 150, y: 1145 }, { x: 260, y: 1130 }, { x: 370, y: 1150 },
-      { x: -10, y: 1160 }, { x: 100, y: 1170 }, { x: 220, y: 1165 },
-      { x: 340, y: 1180 }, { x: 50, y: 1190 }, { x: 170, y: 1200 },
+      { x: -20, dy: 0 }, { x: 80, dy: 15 }, { x: 190, dy: 5 },
+      { x: 300, dy: 20 }, { x: 400, dy: 10 }, { x: 40, dy: 35 },
+      { x: 150, dy: 45 }, { x: 260, dy: 30 }, { x: 370, dy: 50 },
+      { x: -10, dy: 60 }, { x: 100, dy: 70 }, { x: 220, dy: 65 },
     ];
 
     for (const c of clouds) {
       const s = Phaser.Math.FloatBetween(0.8, 1.2);
-      const cloud = this.add.image(c.x, c.y, "cloud").setScale(s).setAlpha(0.7);
+      const cloud = this.add.image(c.x, seamY + c.dy, "cloud").setScale(s).setAlpha(0.7);
       const drift = Phaser.Math.Between(30, 50);
       this.tweens.add({
         targets: cloud,

@@ -4,6 +4,10 @@ import { DialogueBox } from "../ui/DialogueBox";
 const WORLD_W = 390;
 const WORLD_H = 3000;
 
+// Roof/courtyard native size: 768×1376; scale to fit 390px width
+const BG_SCALE = WORLD_W / 768; // ≈ 0.508
+const LAYER_DISPLAY_H = Math.round(1376 * BG_SCALE); // ≈ 699
+
 type PrologueState =
   | "INTRO_PAN"
   | "PHONE_RING"
@@ -16,6 +20,8 @@ type PrologueState =
 export class PrologueScene extends Phaser.Scene {
   private dialogueBox!: DialogueBox;
   private state: PrologueState = "INTRO_PAN";
+  private birdsLanded = 0;
+  private birdSprites: Phaser.GameObjects.Sprite[] = [];
 
   constructor() {
     super({ key: "PrologueScene" });
@@ -26,40 +32,47 @@ export class PrologueScene extends Phaser.Scene {
 
     this.createAnimations();
 
-    // ===== Global gradient background (sky blue → dark grey) =====
+    // ===== Global gradient background: #87CEEB → #333333 =====
     this.buildGlobalGradient(width);
 
     // ===== LAYER 1: Sky (Y: 0–1000) =====
-    // Sun — animated sprite
-    const sun = this.add.sprite(width / 2, 150, "sun_anim");
-    sun.setScale(0.4);
+    // Sun — frame 0, slow rotation
+    const sun = this.add.sprite(width / 2, 200, "sun_anim", 0);
+    sun.setScale(0.3);
     sun.setAlpha(0.9);
-    sun.play("sun_pulse");
+    this.tweens.add({
+      targets: sun,
+      angle: 360,
+      duration: 20000,
+      repeat: -1,
+    });
 
-    // Birds — 4 animated sprites flying across
+    // Birds — fly once, then camera pans after all finish
     this.createBirds(width);
 
     // ===== LAYER 2: Cloud barrier (Y: 900–1300) =====
     this.buildCloudLayer();
 
-    // ===== LAYER 3: City / Roof + Wall (Y: 1200–2400) =====
-    const roof = this.add.image(width / 2, 1250, "roof_grey").setOrigin(0.5, 0);
-    roof.setDisplaySize(width, 600);
+    // ===== LAYER 3: Roof (pixel-perfect) =====
+    const roofY = 1200;
+    const roof = this.add.image(width / 2, roofY, "roof_grey").setOrigin(0.5, 0);
+    roof.setDisplaySize(width, LAYER_DISPLAY_H);
+    const roofBottom = roofY + LAYER_DISPLAY_H;
 
-    const wallTex = this.textures.get("wall");
-    const wallFrame = wallTex.get(0);
-    const roofBottom = 1250 + 600;
-    const wallHeight = 2400 - roofBottom;
+    // ===== LAYER 4: Wall (pixel-perfect TileSprite) =====
+    // bg_courtyard bottom-aligned to WORLD_H, top at:
+    const courtyardTop = WORLD_H - LAYER_DISPLAY_H;
+    const wallHeight = courtyardTop - roofBottom;
     const wallTile = this.add
       .tileSprite(0, roofBottom, width, wallHeight, "wall")
       .setOrigin(0, 0);
-    wallTile.setTileScale(width / wallFrame.width, 1);
+    wallTile.setTileScale(0.5, 0.5);
 
-    // ===== LAYER 4: Courtyard (Y: 2400–3000) =====
+    // ===== LAYER 5: Courtyard (pixel-perfect) =====
     const bg = this.add.image(width / 2, WORLD_H, "bg_courtyard").setOrigin(0.5, 1);
-    bg.setScale(width / bg.width);
+    bg.setScale(BG_SCALE);
 
-    // Hero — animated sprite on the bench
+    // Hero on the bench
     const hero = this.add.sprite(142, 2884, "hero_anim");
     hero.setScale(0.35);
     hero.play("hero_breathe");
@@ -75,12 +88,18 @@ export class PrologueScene extends Phaser.Scene {
     });
     this.dialogueBox.getContainer().setScrollFactor(0);
 
-    // ===== Camera: slow cinematic pan =====
+    // ===== Camera =====
     const cam = this.cameras.main;
     cam.setBounds(0, 0, WORLD_W, WORLD_H);
     cam.setScroll(0, 0);
-
     this.state = "INTRO_PAN";
+  }
+
+  // ---- Start camera pan (called after all birds land) ----
+  private startCameraPan(): void {
+    const { width } = this.scale;
+    const cam = this.cameras.main;
+
     cam.pan(width / 2, 2900, 12000, "Sine.easeInOut", false, (_cam, progress) => {
       if (progress === 1) {
         this.time.delayedCall(500, () => this.phoneRing());
@@ -114,7 +133,7 @@ export class PrologueScene extends Phaser.Scene {
     });
   }
 
-  // ---- Global gradient: #87CEEB (top) → #333333 (bottom) ----
+  // ---- Global gradient: #87CEEB → #333333 ----
   private buildGlobalGradient(worldWidth: number): void {
     const steps = 30;
     const stripH = WORLD_H / steps;
@@ -131,28 +150,54 @@ export class PrologueScene extends Phaser.Scene {
     }
   }
 
-  // ---- Flying birds ----
+  // ---- Birds: fly once across the sky, then trigger camera ----
   private createBirds(worldWidth: number): void {
     const birdData = [
-      { startX: -60, y: 200, scale: 0.08, dur: 9000, delay: 0 },
-      { startX: -90, y: 350, scale: 0.06, dur: 11000, delay: 2000 },
-      { startX: -40, y: 280, scale: 0.07, dur: 10000, delay: 4000 },
-      { startX: -80, y: 450, scale: 0.05, dur: 13000, delay: 1000 },
+      { startX: -100, y: 200, scale: 0.08, dur: 6000, delay: 0 },
+      { startX: -100, y: 350, scale: 0.06, dur: 7000, delay: 1000 },
+      { startX: -100, y: 280, scale: 0.07, dur: 6500, delay: 500 },
+      { startX: -100, y: 450, scale: 0.05, dur: 8000, delay: 300 },
     ];
+
+    this.birdsLanded = 0;
+    this.birdSprites = [];
 
     for (const b of birdData) {
       const bird = this.add.sprite(b.startX, b.y, "bird_anim");
       bird.setScale(b.scale);
       bird.play("bird_fly");
+      this.birdSprites.push(bird);
+
+      // First pass — no repeat
       this.tweens.add({
         targets: bird,
-        x: worldWidth + 80,
+        x: worldWidth + 100,
         duration: b.dur,
         delay: b.delay,
+        onComplete: () => {
+          this.birdsLanded++;
+          if (this.birdsLanded >= birdData.length) {
+            this.startCameraPan();
+            this.startBirdLoop(worldWidth);
+          }
+        },
+      });
+    }
+  }
+
+  // ---- After first pass, birds loop infinitely ----
+  private startBirdLoop(worldWidth: number): void {
+    for (const bird of this.birdSprites) {
+      bird.x = -100;
+      bird.y = Phaser.Math.Between(150, 500);
+      this.tweens.add({
+        targets: bird,
+        x: worldWidth + 100,
+        duration: Phaser.Math.Between(8000, 14000),
         repeat: -1,
         onRepeat: () => {
-          bird.x = -60;
-          bird.y = b.y + Phaser.Math.Between(-30, 30);
+          bird.x = -100;
+          bird.y = Phaser.Math.Between(150, 500);
         },
       });
     }

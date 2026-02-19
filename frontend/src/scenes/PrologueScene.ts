@@ -110,6 +110,23 @@ export class PrologueScene extends Phaser.Scene {
     this.time.delayedCall(3000, () => {
       cam.pan(width / 2, 4700, 15000, "Sine.easeInOut");
     });
+
+    // ==========================================================
+    // MANUAL CAMERA — UP/DOWN or W/S override at any time
+    // ==========================================================
+    const cursors = this.input.keyboard!.createCursorKeys();
+    const keyW = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.W);
+    const keyS = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.S);
+
+    this.events.on("update", () => {
+      const speed = 20;
+      if (cursors.up.isDown || keyW.isDown) {
+        cam.scrollY -= speed;
+      }
+      if (cursors.down.isDown || keyS.isDown) {
+        cam.scrollY += speed;
+      }
+    });
   }
 
   // ---- Animations ----
@@ -190,56 +207,6 @@ export class PrologueScene extends Phaser.Scene {
         ease: "Sine.easeInOut",
       });
     }
-  }
-
-  // ---- Dialogue logic ----
-
-  private phoneRing(): void {
-    this.state = "PHONE_RING";
-    this.dialogueBox.showDialogue(
-      "Телефон",
-      "Входящий вызов: Бабушка...",
-      () => this.showPhoneChoices(),
-    );
-  }
-
-  private showPhoneChoices(): void {
-    this.state = "WAITING_CHOICE";
-    this.dialogueBox.showChoices([
-      { text: "Взять трубку", callback: () => this.onAnswer() },
-      { text: "Сбросить", callback: () => this.onDecline() },
-    ]);
-  }
-
-  private onAnswer(): void {
-    this.state = "ANSWER_GRANDMA";
-    this.dialogueBox.showDialogue(
-      "Бабушка",
-      "Улым, исәнме... Бәрәңгене базга төшерәсе бар...",
-      () => {
-        this.state = "ANSWER_HERO";
-        this.dialogueBox.showDialogue(
-          "ГГ",
-          "Бабуль, некогда, давай потом.",
-          () => this.endCall(),
-        );
-      },
-    );
-  }
-
-  private onDecline(): void {
-    this.state = "DECLINE_THOUGHT";
-    this.dialogueBox.showDialogue(
-      "ГГ (Мысли)",
-      "Опять про огород. Да и скучно там...",
-      () => this.endCall(),
-    );
-  }
-
-  private endCall(): void {
-    this.state = "CALL_ENDED";
-    this.dialogueBox.hide();
-    console.log("QR замечен");
   }
 
   getState(): PrologueState {

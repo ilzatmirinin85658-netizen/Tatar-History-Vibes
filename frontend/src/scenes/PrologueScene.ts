@@ -2,7 +2,7 @@ import Phaser from "phaser";
 import { DialogueBox } from "../ui/DialogueBox";
 
 const WORLD_W = 390;
-const WORLD_H = 4000;
+const WORLD_H = 5000;
 
 type PrologueState =
   | "INTRO_PAN"
@@ -37,7 +37,8 @@ export class PrologueScene extends Phaser.Scene {
     // SEAM-HIDING CURTAIN — solid rect from sky bottom to roof
     // ==========================================================
     const curtainY = skyBg.y + skyBg.displayHeight;
-    const curtainH = 300;
+    const roofY = 2050;
+    const curtainH = roofY - curtainY;
     const curtain = this.add.graphics();
     curtain.fillStyle(0xdff2f8, 1);
     curtain.fillRect(0, curtainY, width, curtainH);
@@ -62,12 +63,12 @@ export class PrologueScene extends Phaser.Scene {
 
     // Wall (behind roof and courtyard)
     const wallTile = this.add
-      .tileSprite(width / 2, 2650, width, 1700, "wall_img")
+      .tileSprite(width / 2, 3450, width, 1700, "wall_img")
       .setOrigin(0.5, 0.5);
     wallTile.setTileScale(0.5, 0.5);
 
     // Roof — starts UNDER the clouds
-    const roof = this.add.image(width / 2, 1250, "roof_grey").setOrigin(0.5, 0);
+    const roof = this.add.image(width / 2, roofY, "roof_grey").setOrigin(0.5, 0);
     roof.setDisplaySize(width, roof.height * (width / roof.width));
     roof.setDepth(0);
 
@@ -80,7 +81,7 @@ export class PrologueScene extends Phaser.Scene {
     bg.setScale(width / bg.width);
 
     // Hero
-    const hero = this.add.sprite(142, 3900, "hero_anim");
+    const hero = this.add.sprite(142, 4700, "hero_anim");
     hero.setScale(0.35);
     hero.play("hero_breathe");
 
@@ -118,7 +119,7 @@ export class PrologueScene extends Phaser.Scene {
     const keyS = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.S);
 
     this.events.on("update", () => {
-      const speed = 10;
+      const speed = 20;
       if (cursors.up.isDown || keyW.isDown) {
         cam.scrollY -= speed;
       }
@@ -128,25 +129,8 @@ export class PrologueScene extends Phaser.Scene {
     });
 
     // ==========================================================
-    // DEBUG: 3 draggable dark clouds for seam transition
+    // DEBUG: Drag-and-drop for all 12 clouds
     // ==========================================================
-    const darkCloudData = [
-      { name: "dark_cloud_1", x: 100, y: 1150 },
-      { name: "dark_cloud_2", x: 200, y: 1150 },
-      { name: "dark_cloud_3", x: 300, y: 1150 },
-    ];
-    const darkClouds: Phaser.GameObjects.Image[] = [];
-    for (const dc of darkCloudData) {
-      const cloud = this.add
-        .image(dc.x, dc.y, "cloud")
-        .setScale(0.9)
-        .setAlpha(0.85)
-        .setDepth(50)
-        .setTint(0x888888)
-        .setName(dc.name)
-        .setInteractive({ draggable: true });
-      darkClouds.push(cloud);
-    }
     this.input.on(
       "drag",
       (
@@ -224,37 +208,36 @@ export class PrologueScene extends Phaser.Scene {
     return sprites;
   }
 
-  // ---- 7 clouds at hand-picked positions with smog tint ----
+  // ---- 12 draggable clouds (editor mode) ----
   private buildCloudBelt(): Phaser.GameObjects.Image[] {
-    const cloudPositions: { x: number; y: number; tint?: number }[] = [
+    const cloudData: { x: number; y: number; tint?: number }[] = [
+      // Light clouds (0-6) — original positions spread wider
       { x: 200, y: 922 },
       { x: 221, y: 1023 },
-      { x: 236, y: 1184, tint: 0xaaaaaa },
+      { x: 236, y: 1184, tint: 0xcccccc },
       { x: 155, y: 866 },
       { x: 237, y: 908 },
       { x: 314, y: 1047, tint: 0xcccccc },
       { x: 63, y: 1042, tint: 0xcccccc },
+      // Dark clouds (7-11) — lower, near roof transition
+      { x: 80, y: 1400, tint: 0x888888 },
+      { x: 195, y: 1500, tint: 0x888888 },
+      { x: 310, y: 1400, tint: 0x888888 },
+      { x: 140, y: 1600, tint: 0x888888 },
+      { x: 270, y: 1550, tint: 0x888888 },
     ];
 
     const sprites: Phaser.GameObjects.Image[] = [];
-    for (let i = 0; i < cloudPositions.length; i++) {
-      const pos = cloudPositions[i];
+    for (let i = 0; i < cloudData.length; i++) {
+      const pos = cloudData[i];
       const cloud = this.add
         .image(pos.x, pos.y, "cloud")
         .setScale(0.9)
         .setAlpha(0.85)
-        .setDepth(50);
+        .setDepth(50)
+        .setName(`Cloud_${i}`)
+        .setInteractive({ draggable: true });
       if (pos.tint) cloud.setTint(pos.tint);
-
-      this.tweens.add({
-        targets: cloud,
-        y: pos.y + 10,
-        duration: Phaser.Math.Between(3000, 5000),
-        yoyo: true,
-        repeat: -1,
-        ease: "Sine.easeInOut",
-      });
-
       sprites.push(cloud);
     }
     return sprites;

@@ -54,7 +54,7 @@ export class PrologueScene extends Phaser.Scene {
     // ==========================================================
     // BIRDS — 2 sprites, fly once left→right, then destroy
     // ==========================================================
-    const birds = this.createBirds(width);
+    this.createBirds(width);
 
     // ==========================================================
     // LOWER LAYERS — roof starts exactly where sky ends
@@ -72,7 +72,7 @@ export class PrologueScene extends Phaser.Scene {
     roof.setDepth(0);
 
     // CLOUDS — 5 large sprites at Y≈1200, below first screen
-    const clouds = this.buildCloudBelt();
+    this.buildCloudBelt();
 
     // Courtyard
     const bg = this.add.image(width / 2, WORLD_H, "bg_courtyard");

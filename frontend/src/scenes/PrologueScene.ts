@@ -88,36 +88,66 @@ export class PrologueScene extends Phaser.Scene {
     this.dialogueBox.getContainer().setScrollFactor(0);
 
     // ==========================================================
-    // CAMERA — start at sky, then pan down to hero
+    // CAMERA — manual control (debug mode)
     // ==========================================================
     const cam = this.cameras.main;
     cam.setBounds(0, 0, WORLD_W, WORLD_H);
     cam.setScroll(0, 0);
     this.state = "INTRO_PAN";
 
-    // Wait 2s at the sky, then pan to hero over 11s
-    this.time.delayedCall(2000, () => {
-      cam.pan(width / 2, 3900, 11000, "Sine.easeInOut");
+    // AUTO-PAN DISABLED for manual placement
+    // this.time.delayedCall(2000, () => {
+    //   cam.pan(width / 2, 3900, 11000, "Sine.easeInOut");
+    // });
+
+    // ==========================================================
+    // DEBUG: Keyboard camera scroll (UP/DOWN or W/S)
+    // ==========================================================
+    const cursors = this.input.keyboard!.createCursorKeys();
+    const keyW = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.W);
+    const keyS = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.S);
+
+    this.events.on("update", () => {
+      const speed = 10;
+      if (cursors.up.isDown || keyW.isDown) {
+        cam.scrollY -= speed;
+      }
+      if (cursors.down.isDown || keyS.isDown) {
+        cam.scrollY += speed;
+      }
     });
 
     // ==========================================================
-    // DEBUG DRAG-AND-DROP — move objects to find ideal positions
+    // DEBUG: Drag-and-drop for clouds + all objects
     // ==========================================================
     const draggables = [sun, ...clouds, ...birds, hero];
     for (const obj of draggables) {
-      obj.setInteractive();
+      obj.setInteractive({ draggable: true });
     }
-    this.input.setDraggable(draggables);
-    this.input.on('drag', function (
-      _pointer: Phaser.Input.Pointer,
-      gameObject: Phaser.GameObjects.Sprite | Phaser.GameObjects.Image,
-      dragX: number,
-      dragY: number,
-    ) {
-      gameObject.x = dragX;
-      gameObject.y = dragY;
-      console.log('Object moved to:', Math.round(dragX), Math.round(dragY));
-    });
+    this.input.on(
+      "drag",
+      (
+        _pointer: Phaser.Input.Pointer,
+        gameObject: Phaser.GameObjects.Sprite | Phaser.GameObjects.Image,
+        dragX: number,
+        dragY: number,
+      ) => {
+        gameObject.x = dragX;
+        gameObject.y = dragY;
+      },
+    );
+    this.input.on(
+      "dragend",
+      (
+        _pointer: Phaser.Input.Pointer,
+        gameObject: Phaser.GameObjects.Sprite | Phaser.GameObjects.Image,
+      ) => {
+        const name = gameObject.name || "unnamed";
+        console.log(
+          `[${name}] X: ${Math.round(gameObject.x)}, Y: ${Math.round(gameObject.y)}`,
+        );
+      },
+    );
 
     // Trigger phone call after birds finish (~10s)
     this.time.delayedCall(10000, () => this.phoneRing());
@@ -172,30 +202,20 @@ export class PrologueScene extends Phaser.Scene {
     return sprites;
   }
 
-  // ---- 5 large clouds at Y≈1200 ----
+  // ---- 10 draggable clouds for manual placement ----
   private buildCloudBelt(): Phaser.GameObjects.Image[] {
     const { width } = this.scale;
     const sprites: Phaser.GameObjects.Image[] = [];
 
-    for (let i = 0; i < 5; i++) {
-      const x = (width / 5) * i + width / 10;
-      const y = Phaser.Math.Between(1150, 1250);
-      const s = Phaser.Math.FloatBetween(0.8, 1.2);
+    for (let i = 0; i < 10; i++) {
+      const x = (width / 10) * i + width / 20;
+      const y = 1150 + (i % 3) * 40;
       const cloud = this.add
         .image(x, y, "cloud")
-        .setScale(s)
-        .setAlpha(0.8)
-        .setDepth(50);
-
-      const drift = Phaser.Math.Between(20, 40);
-      this.tweens.add({
-        targets: cloud,
-        x: x + drift,
-        duration: Phaser.Math.Between(14000, 22000),
-        yoyo: true,
-        repeat: -1,
-        ease: "Sine.easeInOut",
-      });
+        .setScale(0.9)
+        .setAlpha(0.85)
+        .setDepth(50)
+        .setName(`cloud_${i}`);
       sprites.push(cloud);
     }
     return sprites;

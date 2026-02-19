@@ -37,9 +37,14 @@ export class PrologueScene extends Phaser.Scene {
     // SEAM-HIDING CURTAIN — solid rect from sky bottom to roof
     // ==========================================================
     const curtainY = skyBg.y + skyBg.displayHeight;
+    const curtainH = 300;
     const curtain = this.add.graphics();
-    curtain.fillStyle(0x8da3b5, 1);
-    curtain.fillRect(0, curtainY, width, 300);
+    curtain.fillGradientStyle(
+      0xd1dce5, 0xd1dce5, // top-left, top-right
+      0x808080, 0x808080, // bottom-left, bottom-right
+      1, 1, 1, 1,
+    );
+    curtain.fillRect(0, curtainY, width, curtainH);
     curtain.setDepth(0.5);
 
     // ==========================================================

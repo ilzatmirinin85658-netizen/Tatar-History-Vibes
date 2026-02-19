@@ -53,9 +53,9 @@ export class PrologueScene extends Phaser.Scene {
     sun.setDepth(1);
 
     // ==========================================================
-    // BIRDS — 2 sprites, fly once left→right, then destroy
+    // BIRDS — 3 sprites in V-formation
     // ==========================================================
-    this.createBirds(width);
+    this.createBirds();
 
     // ==========================================================
     // LOWER LAYERS — roof starts exactly where sky ends
@@ -72,7 +72,7 @@ export class PrologueScene extends Phaser.Scene {
     roof.setDisplaySize(width, roof.height * (width / roof.width));
     roof.setDepth(0);
 
-    // CLOUDS — 5 large sprites at Y≈1200, below first screen
+    // CLOUDS — 12 sprites forming smog gradient
     this.buildCloudBelt();
 
     // Courtyard
@@ -99,64 +99,17 @@ export class PrologueScene extends Phaser.Scene {
     this.dialogueBox.getContainer().setScrollFactor(0);
 
     // ==========================================================
-    // CAMERA — manual control (debug mode)
+    // CAMERA — epic pan from sky through smog to hero
     // ==========================================================
     const cam = this.cameras.main;
     cam.setBounds(0, 0, WORLD_W, WORLD_H);
     cam.setScroll(0, 0);
     this.state = "INTRO_PAN";
 
-    // AUTO-PAN DISABLED for manual placement
-    // this.time.delayedCall(2000, () => {
-    //   cam.pan(width / 2, 3900, 12000, "Sine.easeInOut");
-    // });
-
-    // ==========================================================
-    // DEBUG: Keyboard camera scroll (UP/DOWN or W/S)
-    // ==========================================================
-    const cursors = this.input.keyboard!.createCursorKeys();
-    const keyW = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.W);
-    const keyS = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.S);
-
-    this.events.on("update", () => {
-      const speed = 20;
-      if (cursors.up.isDown || keyW.isDown) {
-        cam.scrollY -= speed;
-      }
-      if (cursors.down.isDown || keyS.isDown) {
-        cam.scrollY += speed;
-      }
+    // Wait for birds to pass, then slow pan down
+    this.time.delayedCall(3000, () => {
+      cam.pan(width / 2, 4700, 15000, "Sine.easeInOut");
     });
-
-    // ==========================================================
-    // DEBUG: Drag-and-drop for all 12 clouds
-    // ==========================================================
-    this.input.on(
-      "drag",
-      (
-        _pointer: Phaser.Input.Pointer,
-        gameObject: Phaser.GameObjects.Image,
-        dragX: number,
-        dragY: number,
-      ) => {
-        gameObject.x = dragX;
-        gameObject.y = dragY;
-      },
-    );
-    this.input.on(
-      "dragend",
-      (
-        _pointer: Phaser.Input.Pointer,
-        gameObject: Phaser.GameObjects.Image,
-      ) => {
-        console.log(
-          `[${gameObject.name}] X: ${Math.round(gameObject.x)}, Y: ${Math.round(gameObject.y)}`,
-        );
-      },
-    );
-
-    // Trigger phone call after birds finish (~10s)
-    this.time.delayedCall(10000, () => this.phoneRing());
   }
 
   // ---- Animations ----
@@ -178,69 +131,65 @@ export class PrologueScene extends Phaser.Scene {
     });
   }
 
-  // ---- Birds: 2 small sprites, fly once left→right, then destroy ----
-  private createBirds(_worldWidth: number): Phaser.GameObjects.Sprite[] {
+  // ---- Birds: 3 sprites in V-formation, fly left→right ----
+  private createBirds(): void {
     const { width } = this.scale;
     const birdData = [
-      { y: 350, scale: 0.1, delay: 0 },
-      { y: 400, scale: 0.08, delay: 500 },
+      { x: -100, y: 350, scale: 0.1, delay: 0 },     // leader
+      { x: -140, y: 320, scale: 0.09, delay: 200 },   // left wing
+      { x: -140, y: 380, scale: 0.09, delay: 200 },   // right wing
     ];
-    const sprites: Phaser.GameObjects.Sprite[] = [];
 
     for (const b of birdData) {
-      const bird = this.add.sprite(-200, b.y, "bird_anim");
+      const bird = this.add.sprite(b.x, b.y, "bird_anim");
       bird.setScale(b.scale);
       bird.setDepth(1.5);
       bird.play("bird_fly");
-      console.log("Bird width:", bird.width * bird.scaleX);
 
       this.tweens.add({
         targets: bird,
-        x: width + 200,
-        duration: 7000,
+        x: width + 100,
+        duration: 8000,
         delay: b.delay,
-        onComplete: () => {
-          bird.destroy();
-        },
+        onComplete: () => bird.destroy(),
       });
-      sprites.push(bird);
     }
-    return sprites;
   }
 
-  // ---- 12 draggable clouds (editor mode) ----
-  private buildCloudBelt(): Phaser.GameObjects.Image[] {
+  // ---- 12 clouds: smog gradient from sky to roof ----
+  private buildCloudBelt(): void {
     const cloudData: { x: number; y: number; tint?: number }[] = [
-      // Light clouds (0-6) — original positions spread wider
-      { x: 200, y: 922 },
-      { x: 221, y: 1023 },
-      { x: 236, y: 1184, tint: 0xcccccc },
-      { x: 155, y: 866 },
-      { x: 237, y: 908 },
-      { x: 314, y: 1047, tint: 0xcccccc },
-      { x: 63, y: 1042, tint: 0xcccccc },
-      // Dark clouds (7-11) — lower, near roof transition
-      { x: 80, y: 1400, tint: 0x888888 },
-      { x: 195, y: 1500, tint: 0x888888 },
-      { x: 310, y: 1400, tint: 0x888888 },
-      { x: 140, y: 1600, tint: 0x888888 },
-      { x: 270, y: 1550, tint: 0x888888 },
+      { x: 222, y: 1137 },
+      { x: 250, y: 1215 },
+      { x: 205, y: 1523 },
+      { x: 156, y: 1262 },
+      { x: 242, y: 1329 },
+      { x: 212, y: 1481 },
+      { x: 166, y: 1584, tint: 0xcccccc },
+      { x: 144, y: 1742, tint: 0xaaaaaa },
+      { x: 179, y: 1891, tint: 0x888888 },
+      { x: 255, y: 1772, tint: 0x888888 },
+      { x: 192, y: 1955, tint: 0x666666 },
+      { x: 225, y: 1975, tint: 0x666666 },
     ];
 
-    const sprites: Phaser.GameObjects.Image[] = [];
-    for (let i = 0; i < cloudData.length; i++) {
-      const pos = cloudData[i];
+    for (const pos of cloudData) {
       const cloud = this.add
         .image(pos.x, pos.y, "cloud")
         .setScale(0.9)
-        .setAlpha(0.85)
-        .setDepth(50)
-        .setName(`Cloud_${i}`)
-        .setInteractive({ draggable: true });
+        .setAlpha(0.8)
+        .setDepth(50);
       if (pos.tint) cloud.setTint(pos.tint);
-      sprites.push(cloud);
+
+      this.tweens.add({
+        targets: cloud,
+        y: pos.y + 15,
+        duration: 4000,
+        yoyo: true,
+        repeat: -1,
+        ease: "Sine.easeInOut",
+      });
     }
-    return sprites;
   }
 
   // ---- Dialogue logic ----

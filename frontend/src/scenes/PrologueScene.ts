@@ -98,17 +98,78 @@ export class PrologueScene extends Phaser.Scene {
     this.dialogueBox.getContainer().setScrollFactor(0);
 
     // ==========================================================
-    // CAMERA — start at sky, then pan down to hero
+    // CAMERA — manual control (debug mode)
     // ==========================================================
     const cam = this.cameras.main;
     cam.setBounds(0, 0, WORLD_W, WORLD_H);
     cam.setScroll(0, 0);
     this.state = "INTRO_PAN";
 
-    // Wait 2s at the sky, then pan to hero over 12s
-    this.time.delayedCall(2000, () => {
-      cam.pan(width / 2, 3900, 12000, "Sine.easeInOut");
+    // AUTO-PAN DISABLED for manual placement
+    // this.time.delayedCall(2000, () => {
+    //   cam.pan(width / 2, 3900, 12000, "Sine.easeInOut");
+    // });
+
+    // ==========================================================
+    // DEBUG: Keyboard camera scroll (UP/DOWN or W/S)
+    // ==========================================================
+    const cursors = this.input.keyboard!.createCursorKeys();
+    const keyW = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.W);
+    const keyS = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.S);
+
+    this.events.on("update", () => {
+      const speed = 10;
+      if (cursors.up.isDown || keyW.isDown) {
+        cam.scrollY -= speed;
+      }
+      if (cursors.down.isDown || keyS.isDown) {
+        cam.scrollY += speed;
+      }
     });
+
+    // ==========================================================
+    // DEBUG: 3 draggable dark clouds for seam transition
+    // ==========================================================
+    const darkCloudData = [
+      { name: "dark_cloud_1", x: 100, y: 1150 },
+      { name: "dark_cloud_2", x: 200, y: 1150 },
+      { name: "dark_cloud_3", x: 300, y: 1150 },
+    ];
+    const darkClouds: Phaser.GameObjects.Image[] = [];
+    for (const dc of darkCloudData) {
+      const cloud = this.add
+        .image(dc.x, dc.y, "cloud")
+        .setScale(0.9)
+        .setAlpha(0.85)
+        .setDepth(50)
+        .setTint(0x888888)
+        .setName(dc.name)
+        .setInteractive({ draggable: true });
+      darkClouds.push(cloud);
+    }
+    this.input.on(
+      "drag",
+      (
+        _pointer: Phaser.Input.Pointer,
+        gameObject: Phaser.GameObjects.Image,
+        dragX: number,
+        dragY: number,
+      ) => {
+        gameObject.x = dragX;
+        gameObject.y = dragY;
+      },
+    );
+    this.input.on(
+      "dragend",
+      (
+        _pointer: Phaser.Input.Pointer,
+        gameObject: Phaser.GameObjects.Image,
+      ) => {
+        console.log(
+          `[${gameObject.name}] X: ${Math.round(gameObject.x)}, Y: ${Math.round(gameObject.y)}`,
+        );
+      },
+    );
 
     // Trigger phone call after birds finish (~10s)
     this.time.delayedCall(10000, () => this.phoneRing());

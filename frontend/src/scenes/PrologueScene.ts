@@ -39,11 +39,7 @@ export class PrologueScene extends Phaser.Scene {
     const curtainY = skyBg.y + skyBg.displayHeight;
     const curtainH = 300;
     const curtain = this.add.graphics();
-    curtain.fillGradientStyle(
-      0xd1dce5, 0xd1dce5, // top-left, top-right
-      0x808080, 0x808080, // bottom-left, bottom-right
-      1, 1, 1, 1,
-    );
+    curtain.fillStyle(0xdff2f8, 1);
     curtain.fillRect(0, curtainY, width, curtainH);
     curtain.setDepth(0.5);
 

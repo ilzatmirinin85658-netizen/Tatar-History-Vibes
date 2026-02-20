@@ -102,17 +102,17 @@ export class PrologueScene extends Phaser.Scene {
     // PIGEONS on the roof — animated sprites
     // ==========================================================
     const pigeon0 = this.add.sprite(116, 2421, "pigeon_0");
-    pigeon0.setScale(0.5);
+    pigeon0.setScale(0.15);
     pigeon0.setFlipX(true);
     pigeon0.setDepth(60);
 
     const pigeon1 = this.add.sprite(277, 2501, "pigeon_1");
-    pigeon1.setScale(0.5);
+    pigeon1.setScale(0.15);
     pigeon1.setDepth(60);
     pigeon1.play("pigeon_idle_1");
 
     const pigeon2 = this.add.sprite(101, 2543, "pigeon_2");
-    pigeon2.setScale(0.5);
+    pigeon2.setScale(0.15);
     pigeon2.setDepth(60);
     pigeon2.play("pigeon_idle_2");
 
@@ -190,19 +190,19 @@ export class PrologueScene extends Phaser.Scene {
     this.anims.create({
       key: "pigeon_fly",
       frames: this.anims.generateFrameNumbers("pigeon_0", { start: 0, end: 3 }),
-      frameRate: 8,
+      frameRate: 5,
       repeat: -1,
     });
     this.anims.create({
       key: "pigeon_idle_1",
       frames: this.anims.generateFrameNumbers("pigeon_1", { start: 0, end: 3 }),
-      frameRate: 4,
+      frameRate: 2,
       repeat: -1,
     });
     this.anims.create({
       key: "pigeon_idle_2",
       frames: this.anims.generateFrameNumbers("pigeon_2", { start: 0, end: 3 }),
-      frameRate: 4,
+      frameRate: 2,
       repeat: -1,
     });
   }

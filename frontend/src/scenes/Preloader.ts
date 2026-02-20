@@ -53,10 +53,19 @@ export class Preloader extends Phaser.Scene {
       frameHeight: 675,
     });
 
-    // Pigeon images (static, loaded from real PNG files)
-    this.load.image("pigeon_0", pigeonImg0);
-    this.load.image("pigeon_1", pigeonImg1);
-    this.load.image("pigeon_2", pigeonImg2);
+    // Pigeon spritesheets (4 frames each, 1280×698 → 320×698 per frame)
+    this.load.spritesheet("pigeon_0", pigeonImg0, {
+      frameWidth: 320,
+      frameHeight: 698,
+    });
+    this.load.spritesheet("pigeon_1", pigeonImg1, {
+      frameWidth: 320,
+      frameHeight: 698,
+    });
+    this.load.spritesheet("pigeon_2", pigeonImg2, {
+      frameWidth: 320,
+      frameHeight: 698,
+    });
   }
 
   create(): void {

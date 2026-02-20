@@ -99,6 +99,35 @@ export class PrologueScene extends Phaser.Scene {
     this.dialogueBox.getContainer().setScrollFactor(0);
 
     // ==========================================================
+    // PIGEONS on the roof — draggable editor helpers
+    // ==========================================================
+    const pigeonKeys = ["pigeon_0", "pigeon_1", "pigeon_2"];
+    const pigeonStartX = [120, 220, 310];
+    for (let i = 0; i < pigeonKeys.length; i++) {
+      const p = this.add.image(pigeonStartX[i], roofY - 20, pigeonKeys[i]);
+      p.setScale(0.15);
+      p.setDepth(60);
+      p.setInteractive({ draggable: true });
+      p.setName(pigeonKeys[i]);
+    }
+
+    this.input.on(
+      "drag",
+      (
+        _pointer: Phaser.Input.Pointer,
+        obj: Phaser.GameObjects.Image,
+        dragX: number,
+        dragY: number,
+      ) => {
+        obj.x = dragX;
+        obj.y = dragY;
+        console.log(
+          `[${obj.name}] X: ${Math.round(dragX)}, Y: ${Math.round(dragY)}`,
+        );
+      },
+    );
+
+    // ==========================================================
     // CAMERA — epic pan from sky through smog to hero
     // ==========================================================
     const cam = this.cameras.main;

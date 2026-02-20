@@ -99,49 +99,59 @@ export class PrologueScene extends Phaser.Scene {
     this.dialogueBox.getContainer().setScrollFactor(0);
 
     // ==========================================================
-    // PIGEONS on the roof — draggable editor helpers
+    // PIGEONS on the roof — animated sprites
     // ==========================================================
-    const pigeonKeys = ["pigeon_0", "pigeon_1", "pigeon_2"];
-    const pigeonStartX = [120, 220, 310];
-    for (let i = 0; i < pigeonKeys.length; i++) {
-      const p = this.add.image(pigeonStartX[i], roofY - 20, pigeonKeys[i]);
-      p.setScale(0.15);
-      p.setDepth(60);
-      p.setInteractive({ draggable: true });
-      p.setName(pigeonKeys[i]);
-    }
+    const pigeon0 = this.add.sprite(116, 2421, "pigeon_0");
+    pigeon0.setScale(0.5);
+    pigeon0.setFlipX(true);
+    pigeon0.setDepth(60);
 
-    this.input.on(
-      "drag",
-      (
-        _pointer: Phaser.Input.Pointer,
-        obj: Phaser.GameObjects.Image,
-        dragX: number,
-        dragY: number,
-      ) => {
-        obj.x = dragX;
-        obj.y = dragY;
-        console.log(
-          `[${obj.name}] X: ${Math.round(dragX)}, Y: ${Math.round(dragY)}`,
-        );
-      },
-    );
+    const pigeon1 = this.add.sprite(277, 2501, "pigeon_1");
+    pigeon1.setScale(0.5);
+    pigeon1.setDepth(60);
+    pigeon1.play("pigeon_idle_1");
+
+    const pigeon2 = this.add.sprite(101, 2543, "pigeon_2");
+    pigeon2.setScale(0.5);
+    pigeon2.setDepth(60);
+    pigeon2.play("pigeon_idle_2");
 
     // ==========================================================
-    // CAMERA — epic pan from sky through smog to hero
+    // CAMERA — sky → roof pause → pigeon takeoff → hero
     // ==========================================================
     const cam = this.cameras.main;
     cam.setBounds(0, 0, WORLD_W, WORLD_H);
     cam.setScroll(0, 0);
     this.state = "INTRO_PAN";
 
-    // Wait for birds to pass, then slow pan down
-    this.time.delayedCall(3000, () => {
-      cam.pan(width / 2, 4700, 15000, "Sine.easeInOut");
+    // Step 1: Pause 2s at sky, then pan to roof
+    this.time.delayedCall(2000, () => {
+      // Step 2: Pan to roof center (Y=2500) over 8s
+      cam.pan(width / 2, 2500, 8000, "Sine.easeInOut", false, (_cam, progress) => {
+        if (progress === 1) {
+          // Step 3: Arrived at roof — pause, then pigeon_0 takes off
+          this.time.delayedCall(1000, () => {
+            pigeon0.play("pigeon_fly");
+            this.tweens.add({
+              targets: pigeon0,
+              x: -100,
+              y: 2200,
+              duration: 2500,
+              ease: "Sine.easeOut",
+              onComplete: () => pigeon0.destroy(),
+            });
+          });
+
+          // Step 4: After watching takeoff, continue to hero
+          this.time.delayedCall(3500, () => {
+            cam.pan(width / 2, 4700, 8000, "Sine.easeInOut");
+          });
+        }
+      });
     });
 
     // ==========================================================
-    // MANUAL CAMERA — UP/DOWN or W/S override at any time
+    // MANUAL CAMERA — UP/DOWN or W/S (debug override)
     // ==========================================================
     const cursors = this.input.keyboard!.createCursorKeys();
     const keyW = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.W);
@@ -172,6 +182,26 @@ export class PrologueScene extends Phaser.Scene {
     this.anims.create({
       key: "hero_breathe",
       frames: this.anims.generateFrameNumbers("hero_anim", { start: 0, end: 3 }),
+      frameRate: 4,
+      repeat: -1,
+    });
+
+    // Pigeon animations
+    this.anims.create({
+      key: "pigeon_fly",
+      frames: this.anims.generateFrameNumbers("pigeon_0", { start: 0, end: 3 }),
+      frameRate: 8,
+      repeat: -1,
+    });
+    this.anims.create({
+      key: "pigeon_idle_1",
+      frames: this.anims.generateFrameNumbers("pigeon_1", { start: 0, end: 3 }),
+      frameRate: 4,
+      repeat: -1,
+    });
+    this.anims.create({
+      key: "pigeon_idle_2",
+      frames: this.anims.generateFrameNumbers("pigeon_2", { start: 0, end: 3 }),
       frameRate: 4,
       repeat: -1,
     });

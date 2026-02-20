@@ -7,6 +7,9 @@ import sunImg from "../assets/images/sun.png";
 import skyBgImg from "../assets/images/sky_bg.png";
 import birdSheetImg from "../assets/images/bird_sheet.png";
 import heroSheetImg from "../assets/images/hero_sheet.png";
+import pigeonSheetImg from "../assets/images/pigeon_sheet.png";
+import pigeonSheet1Img from "../assets/images/pigeon_sheet1.png";
+import pigeonSheet2Img from "../assets/images/pigeon_sheet2.png";
 
 export class Preloader extends Phaser.Scene {
   constructor() {
@@ -48,6 +51,20 @@ export class Preloader extends Phaser.Scene {
     this.load.spritesheet("hero_anim", heroSheetImg, {
       frameWidth: 320,
       frameHeight: 675,
+    });
+
+    // Pigeon spritesheets (4 frames, 128×128 each)
+    this.load.spritesheet("pigeon_0", pigeonSheetImg, {
+      frameWidth: 128,
+      frameHeight: 128,
+    });
+    this.load.spritesheet("pigeon_1", pigeonSheet1Img, {
+      frameWidth: 128,
+      frameHeight: 128,
+    });
+    this.load.spritesheet("pigeon_2", pigeonSheet2Img, {
+      frameWidth: 128,
+      frameHeight: 128,
     });
   }
 

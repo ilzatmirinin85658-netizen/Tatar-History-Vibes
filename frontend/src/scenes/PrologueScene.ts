@@ -99,16 +99,110 @@ export class PrologueScene extends Phaser.Scene {
     this.dialogueBox.getContainer().setScrollFactor(0);
 
     // ==========================================================
-    // CAMERA — epic pan from sky through smog to hero
+    // PIGEONS on the roof — draggable
+    // ==========================================================
+    const pigeonKeys = ["pigeon_0", "pigeon_1", "pigeon_2"] as const;
+    const pigeonPositions = [
+      { x: 120, y: 2300 },
+      { x: 220, y: 2320 },
+      { x: 310, y: 2290 },
+    ];
+    const pigeons: Phaser.GameObjects.Sprite[] = [];
+
+    for (let i = 0; i < pigeonKeys.length; i++) {
+      const key = pigeonKeys[i];
+      const pos = pigeonPositions[i];
+
+      const pigeon = this.add.sprite(pos.x, pos.y, key);
+      pigeon.setScale(0.4);
+      pigeon.setDepth(60);
+      pigeon.setInteractive({ draggable: true });
+      this.input.setDraggable(pigeon);
+      pigeon.setName(key);
+      pigeons.push(pigeon);
+
+      // Idle animation for each pigeon
+      if (!this.anims.exists(`${key}_flap`)) {
+        this.anims.create({
+          key: `${key}_flap`,
+          frames: this.anims.generateFrameNumbers(key, { start: 0, end: 3 }),
+          frameRate: 6,
+          repeat: -1,
+        });
+      }
+      if (!this.anims.exists(`${key}_idle`)) {
+        this.anims.create({
+          key: `${key}_idle`,
+          frames: this.anims.generateFrameNumbers(key, { start: 0, end: 0 }),
+          frameRate: 1,
+          repeat: -1,
+        });
+      }
+      pigeon.play(`${key}_idle`);
+    }
+
+    // Drag handler — log positions to console
+    this.input.on(
+      "drag",
+      (
+        _pointer: Phaser.Input.Pointer,
+        gameObject: Phaser.GameObjects.Sprite,
+        dragX: number,
+        dragY: number,
+      ) => {
+        gameObject.x = dragX;
+        gameObject.y = dragY;
+        console.log(
+          `[${gameObject.name}] X: ${Math.round(dragX)}, Y: ${Math.round(dragY)}`,
+        );
+      },
+    );
+
+    // ==========================================================
+    // CAMERA — sky → roof pause → pigeon takeoff → hero
     // ==========================================================
     const cam = this.cameras.main;
     cam.setBounds(0, 0, WORLD_W, WORLD_H);
     cam.setScroll(0, 0);
     this.state = "INTRO_PAN";
 
-    // Wait for birds to pass, then slow pan down
+    // Phase 1: Wait for birds, then pan to roof
     this.time.delayedCall(3000, () => {
-      cam.pan(width / 2, 4700, 15000, "Sine.easeInOut");
+      cam.pan(width / 2, 2300, 8000, "Sine.easeInOut", false, (_cam, progress) => {
+        if (progress === 1) {
+          // Phase 2: Camera arrived at roof — pause 3 seconds
+          // After 1 second, pigeon_0 takes off
+          this.time.delayedCall(1000, () => {
+            const p0 = pigeons[0];
+            p0.play("pigeon_0_flap");
+            this.tweens.add({
+              targets: p0,
+              x: -100,
+              y: p0.y - 300,
+              duration: 3000,
+              ease: "Sine.easeIn",
+              onComplete: () => p0.destroy(),
+            });
+          });
+
+          // pigeon_1 and pigeon_2 play a gentle idle bob
+          for (let i = 1; i < pigeons.length; i++) {
+            this.tweens.add({
+              targets: pigeons[i],
+              y: pigeons[i].y - 3,
+              duration: 800,
+              yoyo: true,
+              repeat: -1,
+              ease: "Sine.easeInOut",
+            });
+          }
+
+          // Phase 3: After 3-second pause, continue to hero
+          this.time.delayedCall(3000, () => {
+            cam.pan(width / 2, 4700, 10000, "Sine.easeInOut");
+          });
+        }
+      });
     });
 
     // ==========================================================

@@ -37,8 +37,8 @@ export class PrologueScene extends Phaser.Scene {
     // SEAM-HIDING CURTAIN — solid rect from sky bottom to roof
     // ==========================================================
     const curtainY = skyBg.y + skyBg.displayHeight;
-    const roofY = 2050;
-    const curtainH = roofY - curtainY;
+    const curtainBottom = 1800;
+    const curtainH = curtainBottom - curtainY;
     const curtain = this.add.graphics();
     curtain.fillStyle(0xdff2f8, 1);
     curtain.fillRect(0, curtainY, width, curtainH);
@@ -58,19 +58,29 @@ export class PrologueScene extends Phaser.Scene {
     this.createBirds();
 
     // ==========================================================
-    // LOWER LAYERS — roof starts exactly where sky ends
+    // LOWER LAYERS — wall behind, roof on top
     // ==========================================================
 
-    // Wall (behind roof and courtyard)
+    // Wall — tiled from above roof edge down to courtyard (depth 5)
+    const wallTop = 1800;
+    const wallBottom = 4200;
+    const wallH = wallBottom - wallTop;
     const wallTile = this.add
-      .tileSprite(width / 2, 3450, width, 1700, "wall_img")
+      .tileSprite(width / 2, wallTop + wallH / 2, width, wallH, "wall_img")
       .setOrigin(0.5, 0.5);
     wallTile.setTileScale(0.5, 0.5);
+    wallTile.setDepth(5);
 
-    // Roof — starts UNDER the clouds
-    const roof = this.add.image(width / 2, roofY, "roof_grey").setOrigin(0.5, 0);
-    roof.setDisplaySize(width, roof.height * (width / roof.width));
-    roof.setDepth(0);
+    // Roof — scaled up and shifted right so the gap on the right
+    // edge is pushed off-screen; only left+center visible (depth 6)
+    const roofY = 1800;
+    const roof = this.add.image(width / 2 + 50, roofY, "roof_grey").setOrigin(0.5, 0);
+    const roofScale = 1.25;
+    roof.setDisplaySize(
+      roof.width * roofScale,
+      roof.height * roofScale,
+    );
+    roof.setDepth(6);
 
     // CLOUDS — 12 sprites forming smog gradient
     this.buildCloudBelt();
@@ -195,7 +205,7 @@ export class PrologueScene extends Phaser.Scene {
         .image(pos.x, pos.y, "cloud")
         .setScale(0.9)
         .setAlpha(0.8)
-        .setDepth(50);
+        .setDepth(10);
       if (pos.tint) cloud.setTint(pos.tint);
 
       this.tweens.add({

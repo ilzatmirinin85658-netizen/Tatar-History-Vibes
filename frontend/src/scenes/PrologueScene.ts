@@ -197,14 +197,16 @@ export class PrologueScene extends Phaser.Scene {
     this.anims.create({
       key: "pigeon_idle_1",
       frames: this.anims.generateFrameNumbers("pigeon_1", { start: 0, end: 3 }),
-      frameRate: 4,
+      frameRate: 2,
       repeat: -1,
+      repeatDelay: 1000,
     });
     this.anims.create({
       key: "pigeon_idle_2",
       frames: this.anims.generateFrameNumbers("pigeon_2", { start: 0, end: 3 }),
-      frameRate: 4,
+      frameRate: 2,
       repeat: -1,
+      repeatDelay: 1500,
     });
   }
 

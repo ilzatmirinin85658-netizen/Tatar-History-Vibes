@@ -99,56 +99,16 @@ export class PrologueScene extends Phaser.Scene {
     this.dialogueBox.getContainer().setScrollFactor(0);
 
     // ==========================================================
-    // PIGEONS on the roof — animated sprites
-    // ==========================================================
-    const pigeon0 = this.add.sprite(116, 2421, "pigeon_0");
-    pigeon0.setScale(0.15);
-    pigeon0.setFlipX(true);
-    pigeon0.setFrame(0);
-    pigeon0.setDepth(60);
-
-    const pigeon1 = this.add.sprite(277, 2501, "pigeon_1");
-    pigeon1.setScale(0.15);
-    pigeon1.setDepth(60);
-    pigeon1.play("pigeon_idle_1");
-
-    const pigeon2 = this.add.sprite(101, 2543, "pigeon_2");
-    pigeon2.setScale(0.15);
-    pigeon2.setDepth(60);
-    pigeon2.play("pigeon_idle_2");
-
-    // ==========================================================
-    // CAMERA — sky → roof pause → pigeon takeoff → hero
+    // CAMERA — smooth continuous descent from sky to hero
     // ==========================================================
     const cam = this.cameras.main;
     cam.setBounds(0, 0, WORLD_W, WORLD_H);
     cam.setScroll(0, 0);
     this.state = "INTRO_PAN";
 
-    // Step 1: Pause 2s at sky, then pan to roof
-    this.time.delayedCall(2000, () => {
-      // Step 2: Pan to roof center (Y=2500) over 8s
-      cam.pan(width / 2, 2500, 8000, "Sine.easeInOut", false, (_cam, progress) => {
-        if (progress === 1) {
-          // Step 3: Arrived at roof — pause, then pigeon_0 takes off
-          this.time.delayedCall(1000, () => {
-            pigeon0.play("pigeon_fly");
-            this.tweens.add({
-              targets: pigeon0,
-              x: -100,
-              y: 2200,
-              duration: 2500,
-              ease: "Sine.easeOut",
-              onComplete: () => pigeon0.destroy(),
-            });
-          });
-
-          // Step 4: After watching takeoff, continue to hero
-          this.time.delayedCall(3500, () => {
-            cam.pan(width / 2, 4700, 8000, "Sine.easeInOut");
-          });
-        }
-      });
+    // Wait for birds to fly across (~8s), then smooth pan to hero
+    this.time.delayedCall(8000, () => {
+      cam.pan(width / 2, 3900, 15000, "Sine.easeInOut");
     });
 
     // ==========================================================
@@ -185,28 +145,6 @@ export class PrologueScene extends Phaser.Scene {
       frames: this.anims.generateFrameNumbers("hero_anim", { start: 0, end: 3 }),
       frameRate: 4,
       repeat: -1,
-    });
-
-    // Pigeon animations
-    this.anims.create({
-      key: "pigeon_fly",
-      frames: this.anims.generateFrameNumbers("pigeon_0", { start: 0, end: 3 }),
-      frameRate: 6,
-      repeat: -1,
-    });
-    this.anims.create({
-      key: "pigeon_idle_1",
-      frames: this.anims.generateFrameNumbers("pigeon_1", { start: 0, end: 3 }),
-      frameRate: 2,
-      repeat: -1,
-      repeatDelay: 1000,
-    });
-    this.anims.create({
-      key: "pigeon_idle_2",
-      frames: this.anims.generateFrameNumbers("pigeon_2", { start: 0, end: 3 }),
-      frameRate: 2,
-      repeat: -1,
-      repeatDelay: 1500,
     });
   }
 

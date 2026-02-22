@@ -104,6 +104,7 @@ export class PrologueScene extends Phaser.Scene {
     const pigeon0 = this.add.sprite(116, 2421, "pigeon_0");
     pigeon0.setScale(0.15);
     pigeon0.setFlipX(true);
+    pigeon0.setFrame(0);
     pigeon0.setDepth(60);
 
     const pigeon1 = this.add.sprite(277, 2501, "pigeon_1");
@@ -190,19 +191,19 @@ export class PrologueScene extends Phaser.Scene {
     this.anims.create({
       key: "pigeon_fly",
       frames: this.anims.generateFrameNumbers("pigeon_0", { start: 0, end: 3 }),
-      frameRate: 5,
+      frameRate: 6,
       repeat: -1,
     });
     this.anims.create({
       key: "pigeon_idle_1",
       frames: this.anims.generateFrameNumbers("pigeon_1", { start: 0, end: 3 }),
-      frameRate: 2,
+      frameRate: 4,
       repeat: -1,
     });
     this.anims.create({
       key: "pigeon_idle_2",
       frames: this.anims.generateFrameNumbers("pigeon_2", { start: 0, end: 3 }),
-      frameRate: 2,
+      frameRate: 4,
       repeat: -1,
     });
   }

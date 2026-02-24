@@ -2,7 +2,6 @@ import Phaser from "phaser";
 import { DialogueBox } from "../ui/DialogueBox";
 
 const WORLD_W = 390;
-const WORLD_H = 5000;
 
 type PrologueState =
   | "INTRO_PAN"
@@ -58,41 +57,34 @@ export class PrologueScene extends Phaser.Scene {
     this.createBirds();
 
     // ==========================================================
-    // LOWER LAYERS — wall behind, roof on top
+    // LOWER LAYERS — roof + courtyard (seamless, no wall needed)
     // ==========================================================
 
-    // Wall — tiled from above roof edge down to courtyard (depth 5)
-    const wallTop = 1800;
-    const wallBottom = 4200;
-    const wallH = wallBottom - wallTop;
-    const wallTile = this.add
-      .tileSprite(width / 2, wallTop + wallH / 2, width, wallH, "wall_img")
-      .setOrigin(0.5, 0.5);
-    wallTile.setTileScale(0.5, 0.5);
-    wallTile.setDepth(5);
-
-    // Roof — scaled up and shifted right so the gap on the right
-    // edge is pushed off-screen; only left+center visible (depth 6)
+    // Roof — fits screen width at Y = 1800
     const roofY = 1800;
-    const roof = this.add.image(width / 2 + 50, roofY, "roof_grey").setOrigin(0.5, 0);
-    const roofScale = 1.25;
-    roof.setDisplaySize(
-      roof.width * roofScale,
-      roof.height * roofScale,
-    );
-    roof.setDepth(6);
+    const roof = this.add.image(width / 2, roofY, "roof_grey").setOrigin(0.5, 0);
+    const roofScaleVal = width / roof.width;
+    roof.setDisplaySize(width, roof.height * roofScaleVal);
+    roof.setDepth(5);
+
+    // Courtyard — placed directly under roof
+    const bg = this.add
+      .image(width / 2, roof.y + roof.displayHeight, "bg_courtyard")
+      .setOrigin(0.5, 0);
+    const bgScaleVal = width / bg.width;
+    bg.setDisplaySize(width, bg.height * bgScaleVal);
+    bg.setDepth(5);
+
+    // World height = bottom of courtyard
+    const worldH = bg.y + bg.displayHeight;
 
     // CLOUDS — 12 sprites forming smog gradient
     this.buildCloudBelt();
 
-    // Courtyard
-    const bg = this.add.image(width / 2, WORLD_H, "bg_courtyard");
-    bg.setOrigin(0.5, 1);
-    bg.setScale(width / bg.width);
-
     // Hero
-    const hero = this.add.sprite(142, 4700, "hero_anim");
+    const hero = this.add.sprite(142, roof.y + roof.displayHeight + 400, "hero_anim");
     hero.setScale(0.35);
+    hero.setName("hero");
     hero.play("hero_breathe");
 
     // ==========================================================
@@ -109,20 +101,42 @@ export class PrologueScene extends Phaser.Scene {
     this.dialogueBox.getContainer().setScrollFactor(0);
 
     // ==========================================================
-    // CAMERA — smooth continuous descent from sky to hero
+    // EDITOR — drag clouds and hero, log positions to console
+    // ==========================================================
+    hero.setInteractive({ draggable: true });
+    this.input.setDraggable(hero);
+
+    this.input.on(
+      "drag",
+      (
+        _pointer: Phaser.Input.Pointer,
+        obj: Phaser.GameObjects.Sprite | Phaser.GameObjects.Image,
+        dragX: number,
+        dragY: number,
+      ) => {
+        obj.x = dragX;
+        obj.y = dragY;
+        console.log(
+          `[${obj.name}] X: ${Math.round(dragX)}, Y: ${Math.round(dragY)}`,
+        );
+      },
+    );
+
+    // ==========================================================
+    // CAMERA
     // ==========================================================
     const cam = this.cameras.main;
-    cam.setBounds(0, 0, WORLD_W, WORLD_H);
+    cam.setBounds(0, 0, WORLD_W, worldH);
     cam.setScroll(0, 0);
     this.state = "INTRO_PAN";
 
-    // Wait for birds to fly across (~8s), then smooth pan to hero
-    this.time.delayedCall(8000, () => {
-      cam.pan(width / 2, 3900, 15000, "Sine.easeInOut");
-    });
+    // Auto-pan commented out for editor mode
+    // this.time.delayedCall(8000, () => {
+    //   cam.pan(width / 2, 3900, 15000, "Sine.easeInOut");
+    // });
 
     // ==========================================================
-    // MANUAL CAMERA — UP/DOWN or W/S (debug override)
+    // MANUAL CAMERA — UP/DOWN or W/S
     // ==========================================================
     const cursors = this.input.keyboard!.createCursorKeys();
     const keyW = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.W);
@@ -200,12 +214,15 @@ export class PrologueScene extends Phaser.Scene {
       { x: 225, y: 1975, tint: 0x666666 },
     ];
 
-    for (const pos of cloudData) {
+    cloudData.forEach((pos, i) => {
       const cloud = this.add
         .image(pos.x, pos.y, "cloud")
         .setScale(0.9)
         .setAlpha(0.8)
         .setDepth(10);
+      cloud.setName(`cloud_${i}`);
+      cloud.setInteractive({ draggable: true });
+      this.input.setDraggable(cloud);
       if (pos.tint) cloud.setTint(pos.tint);
 
       this.tweens.add({
@@ -216,7 +233,7 @@ export class PrologueScene extends Phaser.Scene {
         repeat: -1,
         ease: "Sine.easeInOut",
       });
-    }
+    });
   }
 
   getState(): PrologueState {

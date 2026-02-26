@@ -54,6 +54,7 @@ export class Preloader extends Phaser.Scene {
     this.ensureTexture("roof_grey", 390, 300, 0x888888);
     this.ensureTexture("sun", 200, 200, 0xffe066);
     this.ensureTexture("sky_bg", 390, 680, 0x87ceeb);
+    this.ensureTexture("hero_static", 320, 675, 0x44aa88);
 
     this.scene.start("PrologueScene");
   }

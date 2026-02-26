@@ -100,7 +100,7 @@ export class PrologueScene extends Phaser.Scene {
 
     // Hero — static image, draggable for editor positioning
     const hero = this.add.image(width / 2, bg.y + 200, "hero_static");
-    hero.setScale(0.175);
+    hero.setScale(0.15);
     hero.setName("Hero");
     hero.setDepth(100);
     hero.setInteractive({ draggable: true });

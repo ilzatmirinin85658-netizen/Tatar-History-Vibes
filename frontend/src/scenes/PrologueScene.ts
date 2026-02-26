@@ -25,6 +25,23 @@ export class PrologueScene extends Phaser.Scene {
 
     this.createAnimations();
 
+    // Enable drag handler for editor (hero only)
+    this.input.on(
+      "drag",
+      (
+        _pointer: Phaser.Input.Pointer,
+        obj: Phaser.GameObjects.Image,
+        dragX: number,
+        dragY: number,
+      ) => {
+        obj.x = dragX;
+        obj.y = dragY;
+        console.log(
+          `[${obj.name}] X: ${Math.round(dragX)}, Y: ${Math.round(dragY)}`,
+        );
+      },
+    );
+
     // ==========================================================
     // SKY BACKGROUND — sky_bg.png stretched to screen width
     // ==========================================================
@@ -81,12 +98,13 @@ export class PrologueScene extends Phaser.Scene {
     // CLOUDS — 12 sprites forming smog gradient
     this.buildCloudBelt();
 
-    // Hero — centered in upper courtyard, high depth so always visible
-    const hero = this.add.sprite(width / 2, bg.y + 200, "hero_anim");
-    hero.setScale(0.35);
+    // Hero — static image, draggable for editor positioning
+    const hero = this.add.image(width / 2, bg.y + 200, "hero_static");
+    hero.setScale(0.175);
     hero.setName("Hero");
     hero.setDepth(100);
-    hero.play("hero_breathe");
+    hero.setInteractive({ draggable: true });
+    this.input.setDraggable(hero);
 
     // ==========================================================
     // DIALOGUE BOX — fixed to viewport
@@ -100,28 +118,6 @@ export class PrologueScene extends Phaser.Scene {
       height: boxHeight,
     });
     this.dialogueBox.getContainer().setScrollFactor(0);
-
-    // ==========================================================
-    // EDITOR — drag clouds and hero, log positions to console
-    // ==========================================================
-    hero.setInteractive({ draggable: true });
-    this.input.setDraggable(hero);
-
-    this.input.on(
-      "drag",
-      (
-        _pointer: Phaser.Input.Pointer,
-        obj: Phaser.GameObjects.Sprite | Phaser.GameObjects.Image,
-        dragX: number,
-        dragY: number,
-      ) => {
-        obj.x = dragX;
-        obj.y = dragY;
-        console.log(
-          `[${obj.name}] X: ${Math.round(dragX)}, Y: ${Math.round(dragY)}`,
-        );
-      },
-    );
 
     // ==========================================================
     // CAMERA
@@ -165,12 +161,6 @@ export class PrologueScene extends Phaser.Scene {
       repeat: -1,
     });
 
-    this.anims.create({
-      key: "hero_breathe",
-      frames: this.anims.generateFrameNumbers("hero_anim", { start: 0, end: 3 }),
-      frameRate: 4,
-      repeat: -1,
-    });
   }
 
   // ---- Birds: 3 sprites in V-formation, fly left→right ----
@@ -198,35 +188,32 @@ export class PrologueScene extends Phaser.Scene {
     }
   }
 
-  // ---- 12 clouds: smog gradient from sky to roof ----
+  // ---- 12 clouds: hardcoded smog gradient (fixed positions) ----
   private buildCloudBelt(): void {
     const cloudData: { x: number; y: number; tint?: number }[] = [
-      { x: 222, y: 1137 },
-      { x: 250, y: 1215 },
-      { x: 205, y: 1523 },
-      { x: 156, y: 1262 },
-      { x: 242, y: 1329 },
-      { x: 212, y: 1481 },
-      { x: 166, y: 1584, tint: 0xcccccc },
-      { x: 144, y: 1742, tint: 0xaaaaaa },
-      { x: 179, y: 1891, tint: 0x888888 },
-      { x: 255, y: 1772, tint: 0x888888 },
-      { x: 192, y: 1955, tint: 0x666666 },
-      { x: 225, y: 1975, tint: 0x666666 },
+      { x: 196, y: 999 },           // cloud_2
+      { x: 201, y: 1064 },          // cloud_0
+      { x: 218, y: 1181 },          // cloud_1
+      { x: 206, y: 1194 },          // cloud_5
+      { x: 182, y: 1253 },          // cloud_3
+      { x: 199, y: 1394 },          // cloud_4
+      { x: 229, y: 1412, tint: 0xcccccc }, // cloud_6
+      { x: 182, y: 1572, tint: 0xaaaaaa }, // cloud_7
+      { x: 181, y: 1574, tint: 0xaaaaaa }, // cloud_8
+      { x: 205, y: 1654, tint: 0x888888 }, // cloud_9
+      { x: 211, y: 1700, tint: 0x666666 }, // cloud_11
+      { x: 207, y: 1745, tint: 0x666666 }, // cloud_10
     ];
 
-    cloudData.forEach((pos, i) => {
+    for (const pos of cloudData) {
       const cloud = this.add
         .image(pos.x, pos.y, "cloud")
         .setScale(0.9)
-        .setAlpha(0.8)
+        .setAlpha(0.85)
         .setDepth(50);
-      cloud.setName(`cloud_${i}`);
-      cloud.setInteractive({ draggable: true });
-      this.input.setDraggable(cloud);
       if (pos.tint) cloud.setTint(pos.tint);
 
-      const tw = this.tweens.add({
+      this.tweens.add({
         targets: cloud,
         y: pos.y + 15,
         duration: 4000,
@@ -234,10 +221,7 @@ export class PrologueScene extends Phaser.Scene {
         repeat: -1,
         ease: "Sine.easeInOut",
       });
-
-      // Stop tween on drag so it doesn't fight Y-axis movement
-      cloud.on("dragstart", () => tw.stop());
-    });
+    }
   }
 
   getState(): PrologueState {

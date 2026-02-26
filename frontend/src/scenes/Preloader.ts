@@ -5,7 +5,7 @@ import roofImg from "../assets/images/roof_grey.png";
 import sunImg from "../assets/images/sun.png";
 import skyBgImg from "../assets/images/sky_bg.png";
 import birdSheetImg from "../assets/images/bird_sheet.png";
-import heroSheetImg from "../assets/images/hero_sheet.png";
+import heroIdleImg from "../assets/images/hero_idle.png";
 
 export class Preloader extends Phaser.Scene {
   constructor() {
@@ -38,14 +38,13 @@ export class Preloader extends Phaser.Scene {
     this.load.image("sun", sunImg);
     this.load.image("sky_bg", skyBgImg);
 
+    // Static hero image
+    this.load.image("hero_static", heroIdleImg);
+
     // Spritesheets
     this.load.spritesheet("bird_anim", birdSheetImg, {
       frameWidth: 320,
       frameHeight: 698,
-    });
-    this.load.spritesheet("hero_anim", heroSheetImg, {
-      frameWidth: 320,
-      frameHeight: 675,
     });
   }
 

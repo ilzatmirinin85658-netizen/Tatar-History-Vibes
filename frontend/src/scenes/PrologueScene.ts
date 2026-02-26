@@ -81,10 +81,11 @@ export class PrologueScene extends Phaser.Scene {
     // CLOUDS — 12 sprites forming smog gradient
     this.buildCloudBelt();
 
-    // Hero
-    const hero = this.add.sprite(142, roof.y + roof.displayHeight + 400, "hero_anim");
+    // Hero — centered in upper courtyard, high depth so always visible
+    const hero = this.add.sprite(width / 2, bg.y + 200, "hero_anim");
     hero.setScale(0.35);
-    hero.setName("hero");
+    hero.setName("Hero");
+    hero.setDepth(100);
     hero.play("hero_breathe");
 
     // ==========================================================
@@ -219,13 +220,13 @@ export class PrologueScene extends Phaser.Scene {
         .image(pos.x, pos.y, "cloud")
         .setScale(0.9)
         .setAlpha(0.8)
-        .setDepth(10);
+        .setDepth(50);
       cloud.setName(`cloud_${i}`);
       cloud.setInteractive({ draggable: true });
       this.input.setDraggable(cloud);
       if (pos.tint) cloud.setTint(pos.tint);
 
-      this.tweens.add({
+      const tw = this.tweens.add({
         targets: cloud,
         y: pos.y + 15,
         duration: 4000,
@@ -233,6 +234,9 @@ export class PrologueScene extends Phaser.Scene {
         repeat: -1,
         ease: "Sine.easeInOut",
       });
+
+      // Stop tween on drag so it doesn't fight Y-axis movement
+      cloud.on("dragstart", () => tw.stop());
     });
   }
 
